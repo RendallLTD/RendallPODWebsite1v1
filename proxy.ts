@@ -4,6 +4,20 @@ import { createServerClient } from "@supabase/ssr";
 const protectedPaths = ["/dashboard", "/design", "/checkout"];
 
 export async function proxy(request: NextRequest) {
+  // Site-wide password gate (Basic Auth). Only active when SITE_PASSWORD env var is set.
+  // Set SITE_PASSWORD in Vercel project env vars to lock the site; unset to disable.
+  const sitePassword = process.env.SITE_PASSWORD;
+  if (sitePassword) {
+    const auth = request.headers.get("authorization");
+    const expected = "Basic " + btoa("rendall:" + sitePassword);
+    if (auth !== expected) {
+      return new NextResponse("Authentication required", {
+        status: 401,
+        headers: { "WWW-Authenticate": 'Basic realm="Rendall"' },
+      });
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

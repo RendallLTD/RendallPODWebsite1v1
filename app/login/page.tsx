@@ -5,6 +5,24 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
+const DEFAULT_REDIRECT = "/dashboard";
+
+function safeRedirect(target: string | null): string {
+  if (!target) return DEFAULT_REDIRECT;
+  // Must be a relative path starting with a single "/"
+  // Reject "//", "/\", and anything containing a scheme or backslash
+  if (
+    target.length < 2 ||
+    target[0] !== "/" ||
+    target[1] === "/" ||
+    target[1] === "\\" ||
+    target.includes("\\")
+  ) {
+    return DEFAULT_REDIRECT;
+  }
+  return target;
+}
+
 export default function LoginPage() {
   return (
     <Suspense>
@@ -16,7 +34,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = safeRedirect(searchParams.get("redirect"));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
