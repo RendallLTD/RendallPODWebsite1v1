@@ -27,7 +27,14 @@ export default function OrdersPage() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      // Exclude pending drafts — these are in-flight checkouts that haven't
+      // been paid yet and shouldn't appear as "orders" to the user.
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .neq("status", "pending")
+        .order("created_at", { ascending: false });
       setOrders(data || []);
       setLoading(false);
     })();

@@ -2,19 +2,31 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("order");
+  // Stripe redirects with ?session_id={CHECKOUT_SESSION_ID}. We do NOT query
+  // Supabase for the order here — the webhook is async and the order row may
+  // not exist yet. The dashboard orders page will show it once the webhook
+  // lands (usually within a couple of seconds). The session_id is logged for
+  // support/debugging but not shown in the UI.
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    if (sessionId) {
+      console.log("[checkout] success for session", sessionId);
+    }
+  }, [searchParams]);
 
   return (
     <section className="auth-page">
       <div className="auth-card" style={{ textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>&#10003;</div>
-        <h1>Order placed!</h1>
+        <h1>Payment received</h1>
         <p className="auth-subtitle">
-          Your order {orderId ? `#${orderId.slice(0, 8)}` : ""} has been received. We&apos;ll start printing soon.
+          Thanks — we&apos;ve received your payment. Your order confirmation
+          will arrive in your inbox shortly, and you can track its status
+          from your dashboard.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 24 }}>
           <Link href="/dashboard/orders" className="btn btn--primary">View orders</Link>

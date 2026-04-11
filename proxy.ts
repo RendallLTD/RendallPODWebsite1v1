@@ -7,7 +7,13 @@ export async function proxy(request: NextRequest) {
   // Site-wide password gate (Basic Auth). Only active when SITE_PASSWORD env var is set.
   // Set SITE_PASSWORD in Vercel project env vars to lock the site; unset to disable.
   const sitePassword = process.env.SITE_PASSWORD;
-  if (sitePassword) {
+  // Bypass Basic Auth for Stripe webhook paths — Stripe cannot send Basic Auth
+  // credentials and would otherwise hit a 401. Webhook routes verify the
+  // stripe-signature header for their own authentication.
+  if (
+    sitePassword &&
+    !request.nextUrl.pathname.startsWith("/api/webhooks/")
+  ) {
     const auth = request.headers.get("authorization");
     const expected = "Basic " + btoa("rendall:" + sitePassword);
     if (auth !== expected) {

@@ -25,7 +25,10 @@ export default function DashboardPage() {
       const { count: dc } = await supabase.from("designs").select("id", { count: "exact", head: true }).eq("user_id", user.id);
       setDesignCount(dc || 0);
 
-      const { count: oc } = await supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+      // Exclude pending drafts — these are in-flight checkouts and shouldn't
+      // count as "orders" in the overview stat. Matches the filter on
+      // /dashboard/orders so the count and the list stay consistent.
+      const { count: oc } = await supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id).neq("status", "pending");
       setOrderCount(oc || 0);
     })();
   }, []);
