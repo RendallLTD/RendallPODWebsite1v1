@@ -146,12 +146,43 @@ export async function POST() {
     // ========================================================================
     const admin = createAdminClient();
 
-    const cartItemIds = cartRows.map((r) => r.id);
+    const cartItemIds = cartRows.map((r) => r.id).sort();
     const totalCents = lineItems.reduce(
       (sum, li) =>
         sum + (li.price_data?.unit_amount ?? 0) * (li.quantity ?? 0),
       0
     );
+
+    // ========================================================================
+    // Idempotency: reuse an existing pending draft for the same user + cart
+    // snapshot + total within 30 min. Prevents duplicate drafts on double-
+    // click, multi-tab, or network retry. Closes Codex Finding A (Review #3).
+    // ========================================================================
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: existingDrafts } = await admin
+      .from("orders")
+      .select("id, checkout_url, cart_item_ids")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .eq("total_cents", totalCents)
+      .contains("cart_item_ids", cartItemIds)
+      .gte("created_at", thirtyMinAgo);
+
+    const reusable = existingDrafts?.find(
+      (d) =>
+        d.checkout_url &&
+        d.cart_item_ids &&
+        d.cart_item_ids.length === cartItemIds.length
+    );
+
+    if (reusable) {
+      console.log(
+        "[checkout] reusing existing draft",
+        reusable.id,
+        "— idempotent retry"
+      );
+      return Response.json({ url: reusable.checkout_url });
+    }
 
     const { data: draftOrder, error: draftErr } = await admin
       .from("orders")
@@ -226,6 +257,16 @@ export async function POST() {
       await admin.from("orders").delete().eq("id", draftOrder.id);
       throw new Error("Stripe session created without a redirect URL");
     }
+
+    // Persist Stripe session details on the draft so future retries can
+    // reuse this session instead of minting a new one (Finding A).
+    await admin
+      .from("orders")
+      .update({
+        stripe_session_id: session.id,
+        checkout_url: session.url,
+      })
+      .eq("id", draftOrder.id);
 
     return Response.json({ url: session.url });
   } catch (err) {

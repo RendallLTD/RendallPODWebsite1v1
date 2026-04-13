@@ -29,7 +29,16 @@ export default function DesignsPage() {
 
   async function handleDelete(id: string) {
     const supabase = createClient();
-    await supabase.from("designs").delete().eq("id", id);
+    const { error } = await supabase.from("designs").delete().eq("id", id);
+    if (error) {
+      // FK RESTRICT on order_items.design_id → PostgreSQL error 23503
+      if (error.code === "23503") {
+        alert("This design is part of an order and can\u2019t be deleted.");
+      } else {
+        alert("Failed to delete design. Please try again.");
+      }
+      return;
+    }
     setDesigns((prev) => prev.filter((d) => d.id !== id));
   }
 
