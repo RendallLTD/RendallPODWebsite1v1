@@ -10,8 +10,8 @@ export default function ImageUploader({ onImageUpload }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      alert("File too large. Max 10MB.");
+    if (file.size > 50 * 1024 * 1024) {
+      alert("File too large. Max 50MB.");
       return;
     }
     const reader = new FileReader();
@@ -46,7 +46,7 @@ export default function ImageUploader({ onImageUpload }: Props) {
       />
       <div className="uploader__icon">🎨</div>
       <p className="uploader__text">Drag & drop your design here</p>
-      <p className="uploader__sub">or click to browse (PNG, JPG, SVG — max 10MB)</p>
+      <p className="uploader__sub">or click to browse (PNG, JPG, SVG — max 50MB)</p>
     </div>
   );
 }

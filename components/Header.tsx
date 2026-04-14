@@ -20,14 +20,13 @@ export default function Header() {
   return (
     <header className="header">
       <div className="container header__inner">
-        <Link href="/" className="logo">
-          rend<span>all</span>
-        </Link>
+        <Link href="/" className="logo"><img src="/logo.svg" alt="" className="logo__icon" /><span className="logo__text">rend<span>all</span></span></Link>
         <nav className="nav">
           <Link href="/catalog">Catalog</Link>
           <a href="/#how-it-works">How It Works</a>
           <a href="/#pricing">Pricing</a>
           <a href="/#calculator">Earnings</a>
+          <a href="/policies">Policies</a>
         </nav>
         <div className="header__actions">
           {user ? (

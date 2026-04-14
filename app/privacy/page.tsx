@@ -5,48 +5,34 @@ export default function PrivacyPage() {
         <h1>Privacy Policy</h1>
         <p><em>Last updated: April 2026</em></p>
 
-        <h2>1. Who We Are</h2>
-        <p>Rendall is operated by its parent company based in Hong Kong. We provide a print-on-demand platform that connects customers with our fulfillment partner, UinPOD, which manufactures and ships custom apparel from facilities in China and the United States.</p>
+        <p>At Rendall POD, we are committed to protecting your privacy and ensuring your personal data is handled securely. This Privacy Policy explains how we collect, use, and protect the information of merchants (you) and your end-customers when you use our Print-on-Demand services.</p>
 
-        <h2>2. Information We Collect</h2>
-        <p>We collect information you provide when creating an account (name, email, password), placing orders (shipping address, billing details), and using our platform (uploaded designs, product customizations, store connections). Payment card details are collected and processed directly by our payment processor (Stripe) and are never stored on our servers.</p>
+        <h2>1. Information We Collect</h2>
+        <p><strong>Merchant Information:</strong> When you register for an account, we collect your name, business name, email address, phone number, and billing information.</p>
+        <p><strong>Customer Information:</strong> To fulfill orders, you provide us with your end-customers&apos; details, including their names, shipping addresses, and phone numbers (for delivery purposes only).</p>
+        <p><strong>Design &amp; Order Data:</strong> We collect the design files (images/graphics) you upload and the specific order details (product type, size, color) to process your production requests.</p>
 
-        <h2>3. How We Use Your Information</h2>
-        <p>We use your information to provide and improve our services, process and fulfill orders, communicate with you about your account, and send relevant updates about our platform.</p>
-
-        <h2>4. Information Sharing</h2>
-        <p>We do not sell your personal information. We share information with the following third parties only as necessary to operate our service:</p>
+        <h2>2. How We Use Your Information</h2>
+        <p>We use the collected data exclusively to:</p>
         <ul>
-          <li><strong>UinPOD</strong> — our manufacturing and fulfillment partner, to print and ship your orders.</li>
-          <li><strong>Stripe</strong> — to process payments securely.</li>
-          <li><strong>Supabase</strong> — our database and authentication provider.</li>
-          <li><strong>Email and analytics providers</strong> — to deliver transactional emails and improve the platform.</li>
+          <li>Produce, fulfill, and ship your orders.</li>
+          <li>Process payments securely.</li>
+          <li>Communicate with you regarding order statuses, platform updates, and customer support.</li>
+          <li>Improve our manufacturing and platform services.</li>
         </ul>
-        <p>We may also disclose information if required by law or to protect our legal rights.</p>
 
-        <h2>5. International Data Transfers</h2>
-        <p>Because Rendall operates from Hong Kong with fulfillment in China and the United States, your information may be transferred across borders to deliver your orders. We take reasonable measures to ensure your data is protected wherever it is processed.</p>
+        <h2>3. Data Sharing and Third Parties</h2>
+        <p>We do not sell your data or your customers&apos; data to third parties. We only share necessary information with trusted service providers to fulfill our core services. This includes:</p>
+        <ul>
+          <li>Shipping carriers (e.g., USPS, FedEx, local postal services) to deliver packages.</li>
+          <li>Secure payment gateways (e.g., Stripe, PayPal) to process transactions.</li>
+        </ul>
 
-        <h2>6. Data Security</h2>
-        <p>We use industry-standard security measures to protect your data, including encryption in transit, secure authentication through Supabase, and strict access controls on customer records.</p>
+        <h2>4. Data Security</h2>
+        <p>We implement industry-standard security measures to protect your design files, personal information, and customer data from unauthorized access, alteration, or disclosure.</p>
 
-        <h2>7. Data Retention</h2>
-        <p>We retain account and order information for as long as your account is active or as needed to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements. You may request deletion at any time (see Section 9).</p>
-
-        <h2>8. Cookies</h2>
-        <p>We use cookies to maintain your session, remember your preferences, and improve your experience. You can disable cookies in your browser settings, though some features may not work correctly without them.</p>
-
-        <h2>9. Your Rights</h2>
-        <p>Depending on your location, you may have the right to access, correct, delete, or export your personal information, and to object to or restrict certain processing. Residents of the EU/UK (GDPR) and California (CCPA) have additional rights, including the right to opt out of the sale of personal information — note that we do not sell personal information. To exercise any of these rights, contact us at the address below.</p>
-
-        <h2>10. Children&apos;s Privacy</h2>
-        <p>Our services are not intended for children under 18. We do not knowingly collect information from minors.</p>
-
-        <h2>11. Changes to This Policy</h2>
-        <p>We may update this policy periodically. We will notify you of significant changes via email or platform notification.</p>
-
-        <h2>12. Contact</h2>
-        <p>For privacy inquiries or to exercise your rights, contact us at privacy@rendall.com.</p>
+        <h2>5. Your Rights</h2>
+        <p>You have the right to access, update, or delete your account information at any time. If you wish to permanently delete your account and associated data, please contact us at rendall.ltd@gmail.com.</p>
       </div>
     </section>
   );

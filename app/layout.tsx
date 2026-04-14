@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
   title: "Rendall — Create and Sell Custom Products",
-  description: "The print-on-demand platform trusted by millions of sellers worldwide.",
+  description: "The print-on-demand platform that matches everyone on quality — and aims to beat everyone on price.",
 };
 
 export default function RootLayout({
@@ -18,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <Header />
         <main>{children}</main>
         <Footer />

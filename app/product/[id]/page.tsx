@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProductById, allProducts } from "@/lib/products";
+import { getProductById, getProductHero, allProducts } from "@/lib/products";
+import SplatButton from "@/components/SplatButton";
 
 export function generateStaticParams() {
   return allProducts.map((p) => ({ id: p.id }));
@@ -16,14 +17,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <section className="product-detail">
         <div className="container product-detail__layout">
           <div className="product-detail__image">
-            <div className="product-detail__img-box">{product.emoji}</div>
+            <div className="product-detail__img-box"><img src={getProductHero(product)} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
           </div>
           <div className="product-detail__info">
             <div className="product-detail__brand">{product.brand}</div>
             <h1>{product.name}</h1>
             <div className="product-detail__prices">
               <span className="product-detail__price">From {product.price}</span>
-              <span className="product-detail__premium">From {product.premium} with Premium</span>
             </div>
             <p className="product-detail__desc">{product.description}</p>
 
@@ -52,9 +52,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {product.meta.map((m) => <span key={m}>{m}</span>)}
             </div>
 
-            <Link href={`/design/${product.id}`} className="btn btn--primary btn--lg product-detail__cta">
-              Start designing
-            </Link>
+            <SplatButton href={`/design/${product.id}`}>Start designing</SplatButton>
           </div>
         </div>
       </section>

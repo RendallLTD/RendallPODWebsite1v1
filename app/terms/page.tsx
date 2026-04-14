@@ -5,32 +5,28 @@ export default function TermsPage() {
         <h1>Terms of Service</h1>
         <p><em>Last updated: April 2026</em></p>
 
-        <h2>1. Acceptance of Terms</h2>
-        <p>By accessing or using Rendall&apos;s services, you agree to be bound by these Terms of Service. If you do not agree, do not use our services.</p>
+        <p>Welcome to Rendall POD. By using our website, platform, and manufacturing services, you agree to comply with the following Terms of Service.</p>
 
-        <h2>2. Description of Service</h2>
-        <p>Rendall provides a print-on-demand platform that allows users to create custom product designs, connect e-commerce stores, and fulfill orders through our printing and shipping network.</p>
+        <h2>1. Account Responsibilities</h2>
+        <p>You must be 18 years or older to create an account. You are responsible for maintaining the security of your account and password. Rendall cannot and will not be liable for any loss or damage resulting from your failure to maintain account security.</p>
 
-        <h2>3. User Accounts</h2>
-        <p>You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials. You must be at least 18 years old to use our services.</p>
+        <h2>2. Intellectual Property &amp; Content Rules</h2>
+        <p>You remain the sole owner of the copyright and intellectual property for all designs you upload to our platform. We do not claim any ownership over your artwork.</p>
+        <p>However, by uploading content, you guarantee that:</p>
+        <ul>
+          <li>You hold the legal rights, licenses, or permissions to reproduce and sell the designs.</li>
+          <li>The content does not infringe upon third-party trademarks, copyrights, or intellectual property rights.</li>
+          <li>The content is not illegal, hateful, explicit, or abusive.</li>
+        </ul>
+        <p>We reserve the right to review and cancel any orders or terminate accounts that violate these rules or pose a legal risk to our factory.</p>
 
-        <h2>4. Intellectual Property</h2>
-        <p>You retain ownership of all designs you upload. You represent that you have the right to use all content you upload and that it does not infringe on any third party&apos;s intellectual property rights. Rendall is not liable for intellectual property disputes between users and third parties.</p>
+        <h2>3. Limitation of Liability</h2>
+        <p>Rendall shall not be liable for any indirect, incidental, or consequential damages, including loss of profits, revenue, or data, arising from the use of our platform or delayed production/shipping times.</p>
 
-        <h2>5. Prohibited Content</h2>
-        <p>You may not upload designs that contain illegal content, hate speech, copyrighted material you don&apos;t own, or content that violates any applicable laws.</p>
+        <h2>4. Pricing and Modifications</h2>
+        <p>We reserve the right to modify product prices, shipping rates, or discontinue specific blank products at any time. We will make reasonable efforts to notify merchants in advance of significant pricing changes.</p>
 
-        <h2>6. Payments and Pricing</h2>
-        <p>Product prices are listed in our catalog and may change at any time. You are charged when an order is placed. Refunds are handled on a case-by-case basis for quality issues.</p>
-
-        <h2>7. Limitation of Liability</h2>
-        <p>Rendall is not liable for any indirect, incidental, or consequential damages arising from your use of our services. Our total liability is limited to the amount you have paid us in the preceding 12 months.</p>
-
-        <h2>8. Changes to Terms</h2>
-        <p>We may update these terms at any time. Continued use of our services constitutes acceptance of the updated terms.</p>
-
-        <h2>9. Contact</h2>
-        <p>For questions about these terms, contact us at legal@rendall.com.</p>
+        <p style={{ marginTop: 32 }}>By continuing to use our services, you accept these terms in full.</p>
       </div>
     </section>
   );

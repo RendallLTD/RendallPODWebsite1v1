@@ -1,3 +1,31 @@
+export type PrintAreaOverlay = {
+  /** Position of print area box on the product photo, as percentages (0–1) */
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+export type PrintAreaSpec = {
+  /** Max print width in mm */
+  widthMm: number;
+  /** Max print height in mm */
+  heightMm: number;
+  /** Offset from top of garment in mm */
+  topOffsetMm: number;
+  /** Where to draw the print area box on the product photo */
+  overlay: PrintAreaOverlay;
+};
+
+export type GarmentMeasurements = {
+  /** Body width (pit-to-pit) per size in inches */
+  widthBySize: Record<string, number>;
+  /** Body length (shoulder-to-hem) per size in inches */
+  lengthBySize: Record<string, number>;
+  /** Print area specs per side */
+  printSpecs: Record<string, PrintAreaSpec>;
+};
+
 export type Product = {
   id: string;
   brand: string;
@@ -7,68 +35,173 @@ export type Product = {
   premium: string;
   meta: string[];
   emoji: string;
-  category: "clothing" | "accessories" | "home";
+  category: "clothing" | "accessories";
+  subcategory: string;
   description: string;
   sizes: string[];
   colors: string[];
   printAreas: string[];
+  /** Hero image shown on catalog cards & product page (overrides the /products/{id}.png convention) */
+  heroImage?: string;
+  /** Per-color image paths keyed by color name (lowercase, spaces stripped) */
+  colorImages?: Record<string, { front: string; back?: string }>;
+  /** Product photos per side (paths in /public) */
+  photos?: Record<string, string>;
+  /** Real garment measurements for the designer */
+  measurements?: GarmentMeasurements;
 };
 
-const clothing: Product[] = [
-  { id: "gildan-heavy-cotton-tee", brand: "Gildan", name: "Unisex Heavy Cotton Tee", price: "$8.80", priceCents: 880, premium: "$7.04", meta: ["8 sizes", "70 colors", "22 providers"], emoji: "👕", category: "clothing", description: "A classic heavyweight cotton tee. Durable, comfortable, and perfect for bold designs. Pre-shrunk jersey knit with seamless collar.", sizes: ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"], colors: ["White", "Black", "Navy", "Red", "Royal Blue", "Sport Grey", "Dark Heather", "Forest Green"], printAreas: ["front", "back"] },
-  { id: "bella-canvas-jersey-tee", brand: "Bella+Canvas", name: "Unisex Jersey Short Sleeve Tee", price: "$10.98", priceCents: 1098, premium: "$8.78", meta: ["9 sizes", "126 colors", "21 providers"], emoji: "👕", category: "clothing", description: "Ultra-soft, retail-fit jersey tee. Side-seamed for a modern silhouette. The go-to blank for premium print-on-demand.", sizes: ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"], colors: ["White", "Black", "Heather Gray", "Navy", "Red", "Athletic Heather", "Soft Cream", "True Royal"], printAreas: ["front", "back"] },
-  { id: "gildan-softstyle-tshirt", brand: "Gildan", name: "Unisex Softstyle T-Shirt", price: "$7.95", priceCents: 795, premium: "$6.36", meta: ["9 sizes", "66 colors", "20 providers"], emoji: "👕", category: "clothing", description: "Lightweight softstyle fabric with a vintage feel. Great drape and fit at an unbeatable price point.", sizes: ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"], colors: ["White", "Black", "Sport Grey", "Navy", "Red", "Royal", "Charcoal", "Dark Heather"], printAreas: ["front", "back"] },
-  { id: "comfort-colors-garment-dyed", brand: "Comfort Colors", name: "Unisex Garment-Dyed T-Shirt", price: "$12.41", priceCents: 1241, premium: "$9.93", meta: ["7 sizes", "61 colors", "12 providers"], emoji: "👕", category: "clothing", description: "Garment-dyed for a lived-in, vintage look from day one. Heavyweight ringspun cotton with a relaxed fit.", sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL"], colors: ["White", "Black", "Butter", "Blue Jean", "Pepper", "Seafoam", "Ivory", "Crimson"], printAreas: ["front", "back"] },
-  { id: "gildan-heavy-blend-hoodie", brand: "Gildan", name: "Heavy Blend Hoodie", price: "$21.14", priceCents: 2114, premium: "$16.91", meta: ["8 sizes", "42 colors", "18 providers"], emoji: "🧣", category: "clothing", description: "Cozy heavyweight fleece hoodie with a double-lined hood and kangaroo pocket. A best-seller for fall and winter collections.", sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"], colors: ["White", "Black", "Navy", "Sport Grey", "Red", "Royal", "Dark Heather", "Forest Green"], printAreas: ["front", "back"] },
-  { id: "awdis-full-zip-hoodie", brand: "AWDIS", name: "Full Zip Hoodie", price: "$30.98", priceCents: 3098, premium: "$24.78", meta: ["5 sizes", "10 colors", "2 providers"], emoji: "🧣", category: "clothing", description: "Premium full-zip hoodie with brushed fleece lining. Modern athletic fit with metal zipper and split kangaroo pockets.", sizes: ["S", "M", "L", "XL", "2XL"], colors: ["White", "Black", "Navy", "Heather Grey", "Burgundy"], printAreas: ["front", "back"] },
-  { id: "gildan-crewneck-sweatshirt", brand: "Gildan", name: "Heavy Blend Crewneck Sweatshirt", price: "$15.24", priceCents: 1524, premium: "$12.19", meta: ["8 sizes", "38 colors", "19 providers"], emoji: "👖", category: "clothing", description: "Classic crewneck sweatshirt in pill-resistant fleece. Double-needle stitching for durability. Great for oversized graphic designs.", sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"], colors: ["White", "Black", "Navy", "Sport Grey", "Red", "Royal", "Dark Heather", "Sand"], printAreas: ["front", "back"] },
-  { id: "bella-canvas-sponge-fleece-crewneck", brand: "Bella+Canvas", name: "Unisex Sponge Fleece Crewneck", price: "$22.50", priceCents: 2250, premium: "$18.00", meta: ["6 sizes", "18 colors", "8 providers"], emoji: "👖", category: "clothing", description: "Ultra-soft sponge fleece with a retail-quality fit. Side-seamed, drop shoulder for a relaxed modern look.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["White", "Black", "Heather Gray", "Navy", "Military Green", "Mauve"], printAreas: ["front", "back"] },
-  { id: "lane-seven-premium-tee", brand: "Lane Seven", name: "Unisex Premium Tee", price: "$11.50", priceCents: 1150, premium: "$9.20", meta: ["7 sizes", "34 colors", "6 providers"], emoji: "👕", category: "clothing", description: "Heavyweight premium tee with a boxy, relaxed fit. Garment-dyed in rich, saturated colors.", sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL"], colors: ["White", "Black", "Navy", "Sage", "Cream", "Burnt Orange", "Burgundy", "Forest"], printAreas: ["front", "back"] },
-  { id: "aop-tank-top", brand: "AOP", name: "All-Over Print Tank Top", price: "$18.95", priceCents: 1895, premium: "$15.16", meta: ["5 sizes", "1 color", "4 providers"], emoji: "🩱", category: "clothing", description: "Full all-over print tank top. Your design covers the entire garment — perfect for bold, edge-to-edge artwork.", sizes: ["S", "M", "L", "XL", "2XL"], colors: ["White"], printAreas: ["all-over"] },
-  { id: "rabbit-skins-toddler-tee", brand: "Rabbit Skins", name: "Toddler Fine Jersey Tee", price: "$7.80", priceCents: 780, premium: "$6.24", meta: ["4 sizes", "22 colors", "8 providers"], emoji: "👶", category: "clothing", description: "Soft fine jersey tee sized for toddlers. Ribbed collar with set-in sleeves. A favorite for kids' clothing brands.", sizes: ["2T", "3T", "4T", "5/6T"], colors: ["White", "Black", "Pink", "Light Blue", "Red", "Navy", "Heather", "Lemon"], printAreas: ["front", "back"] },
-  { id: "aop-leggings", brand: "AOP", name: "All-Over Print Leggings", price: "$24.80", priceCents: 2480, premium: "$19.84", meta: ["5 sizes", "1 color", "3 providers"], emoji: "🦵", category: "clothing", description: "Full all-over print leggings with a wide elastic waistband. Four-way stretch for comfort and bold design impact.", sizes: ["XS", "S", "M", "L", "XL"], colors: ["White"], printAreas: ["all-over"] },
+export const allProducts: Product[] = [
+  // ── T-Shirts ──────────────────────────────────────────────────────────
+  {
+    id: "mens-crewneck-tee",
+    brand: "Rendall",
+    name: "Men's 180gsm Crewneck T-Shirt",
+    price: "$5.00",
+    priceCents: 500,
+    premium: "$4.00",
+    meta: ["8 sizes", "7 colors"],
+    emoji: "👕",
+    category: "clothing",
+    subcategory: "T-Shirts",
+    description: "Classic 180gsm cotton crewneck tee. Comfortable everyday wear, perfect for bold graphic designs. DTF printed for vibrant, durable results.",
+    sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"],
+    colors: ["White", "Black", "Grey", "Navy", "Red", "Beige", "Dark Pink"],
+    printAreas: ["front", "back"],
+    heroImage: "/products/mens-crewneck-tee/white/mens-crewneck-tee-white.png",
+    colorImages: {
+      white:    { front: "/products/mens-crewneck-tee/white/mens-crewneck-tee-white.png" },
+      black:    { front: "/products/mens-crewneck-tee/black/mens-crewneck-tee-black.png" },
+      grey:     { front: "/products/mens-crewneck-tee/grey/mens-crewneck-tee-grey.png", back: "/products/mens-crewneck-tee/grey/mens-crewneck-tee-grey-back.png" },
+      navy:     { front: "/products/mens-crewneck-tee/navy/mens-crewneck-tee-navy.jpg" },
+      red:      { front: "/products/mens-crewneck-tee/red/mens-crewneck-tee-red.png", back: "/products/mens-crewneck-tee/red/mens-crewneck-tee-red-back.png" },
+      beige:    { front: "/products/mens-crewneck-tee/beige/mens-crewneck-tee-beige.png" },
+      darkpink: { front: "/products/mens-crewneck-tee/darkpink/mens-crewneck-tee-darkpink.png" },
+    },
+    measurements: {
+      widthBySize: { S: 20.5, M: 22, L: 23.5, XL: 25, "2XL": 26.75, "3XL": 28.25, "4XL": 29.75, "5XL": 31.25 },
+      lengthBySize: { S: 26.25, M: 27.25, L: 28.25, XL: 29.25, "2XL": 30.25, "3XL": 31.25, "4XL": 32.25, "5XL": 33.25 },
+      printSpecs: {
+        front: { widthMm: 300, heightMm: 400, topOffsetMm: 80, overlay: { left: 0.35, top: 0.27, width: 0.28, height: 0.38 } },
+        back: { widthMm: 300, heightMm: 400, topOffsetMm: 60, overlay: { left: 0.34, top: 0.20, width: 0.30, height: 0.40 } },
+      },
+    },
+  },
+  { id: "vintage-wash-drop-shoulder-tee", brand: "Rendall", name: "Heavyweight Vintage Wash Drop-Shoulder Tee", price: "$8.10", priceCents: 810, premium: "$6.48", meta: ["6 sizes", "8 colors"], emoji: "👕", category: "clothing", subcategory: "T-Shirts", description: "230gsm heavyweight cotton tee with a vintage wash finish and relaxed drop-shoulder silhouette. Premium streetwear feel.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "Grey", "Purple", "Blue", "Military Green", "Brown", "Khaki", "Rose Red"], printAreas: ["front", "back"] },
+  { id: "mens-long-sleeve-tee", brand: "Rendall", name: "Men's Long Sleeve Crewneck T-Shirt", price: "$7.00", priceCents: 700, premium: "$5.60", meta: ["6 sizes", "4 colors"], emoji: "👕", category: "clothing", subcategory: "T-Shirts", description: "180gsm cotton long sleeve crewneck. Great for layering or standalone wear in cooler weather. DTF printed.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "White", "Navy", "Khaki"], printAreas: ["front", "back"] },
+
+  // ── Kids ───────────────────────────────────────────────────────────────
+  { id: "kids-cotton-tee", brand: "Rendall", name: "Kids' 180gsm Cotton T-Shirt", price: "$6.20", priceCents: 620, premium: "$4.96", meta: ["5 sizes", "3 colors"], emoji: "🧒", category: "clothing", subcategory: "Kids", description: "Soft 180gsm cotton tee sized for kids ages 4–12. Same quality print as our adult range. DTF heat transfer for designs that last.", sizes: ["4Y", "6Y", "8Y", "10Y", "12Y"], colors: ["Black", "White", "Pink"], printAreas: ["front", "back"] },
+  { id: "kids-premium-sweatshirt", brand: "Rendall", name: "Kids' Premium Crewneck Sweatshirt", price: "$9.60", priceCents: 960, premium: "$7.68", meta: ["6 sizes", "3 colors"], emoji: "🧒", category: "clothing", subcategory: "Kids", description: "330gsm premium cotton blend crewneck sweatshirt for kids. Heavyweight and durable for everyday wear.", sizes: ["XS", "S", "M", "L", "XL", "XXL"], colors: ["Black", "Red", "Khaki"], printAreas: ["front", "back"] },
+
+  // ── Hoodies & Sweatshirts ─────────────────────────────────────────────
+  { id: "classic-pullover-hoodie", brand: "Rendall", name: "Classic Pullover Fleece Hoodie", price: "$12.40", priceCents: 1240, premium: "$9.92", meta: ["6 sizes", "6 colors"], emoji: "🧥", category: "clothing", subcategory: "Hoodies & Sweatshirts", description: "Cozy 50/50 cotton-polyester fleece hoodie with kangaroo pocket and drawstring hood. A staple for any apparel line.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "White", "Red", "Dark Grey", "Light Grey", "Navy"], printAreas: ["front", "back"] },
+  { id: "mens-crewneck-sweatshirt", brand: "Rendall", name: "Men's Crewneck Sweatshirt", price: "$9.00", priceCents: 900, premium: "$7.20", meta: ["6 sizes", "6 colors"], emoji: "👔", category: "clothing", subcategory: "Hoodies & Sweatshirts", description: "96% polyester / 4% cotton crewneck sweatshirt. Smooth exterior for crisp DTF prints. Comfortable relaxed fit.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "White", "Red", "Dark Grey", "Light Grey", "Navy"], printAreas: ["front", "back"] },
+
+  // ── Tank Tops ─────────────────────────────────────────────────────────
+  { id: "athletic-muscle-tank", brand: "Rendall", name: "Athletic Muscle Tank", price: "$6.40", priceCents: 640, premium: "$5.12", meta: ["6 sizes", "2 colors"], emoji: "💪", category: "clothing", subcategory: "Tank Tops", description: "180gsm cotton muscle tank with cut-off sleeves. Perfect for gym wear, festival merch, or summer collections.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "White"], printAreas: ["front", "back"] },
+  { id: "classic-sleeveless-tee", brand: "Rendall", name: "Classic Sleeveless T-Shirt", price: "$7.00", priceCents: 700, premium: "$5.60", meta: ["6 sizes", "2 colors"], emoji: "🩱", category: "clothing", subcategory: "Tank Tops", description: "180gsm cotton sleeveless tee with a relaxed fit. Clean lines for a versatile casual look.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "White"], printAreas: ["front", "back"] },
+  { id: "vintage-wash-sleeveless-tee", brand: "Rendall", name: "Vintage Wash Sleeveless Tee", price: "$8.00", priceCents: 800, premium: "$6.40", meta: ["6 sizes", "1 color"], emoji: "🏋️", category: "clothing", subcategory: "Tank Tops", description: "100% cotton sleeveless tee with a vintage wash finish. Distressed streetwear aesthetic.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black"], printAreas: ["front", "back"] },
+
+  // ── Polos ──────────────────────────────────────────────────────────────
+  { id: "mens-polo-shirt", brand: "Rendall", name: "Men's Short Sleeve Polo Shirt", price: "$8.10", priceCents: 810, premium: "$6.48", meta: ["5 sizes", "2 colors"], emoji: "👔", category: "clothing", subcategory: "Polos", description: "65% cotton / 35% polyester polo at 180gsm. Ribbed collar and cuffs. Smart-casual option for branded apparel.", sizes: ["M", "L", "XL", "2XL", "3XL"], colors: ["Black", "White"], printAreas: ["front", "back"] },
+
+  // ── Sets & Shorts ─────────────────────────────────────────────────────
+  { id: "mens-casual-shorts", brand: "Rendall", name: "Men's Casual Lounge Shorts", price: "$7.20", priceCents: 720, premium: "$5.76", meta: ["6 sizes", "3 colors"], emoji: "🩳", category: "clothing", subcategory: "Sets & Shorts", description: "220gsm polyester casual shorts. Lightweight, comfortable, and perfect for loungewear or athleisure lines.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black", "Khaki", "Light Grey"], printAreas: ["front"] },
+  { id: "mens-tshirt-shorts-set", brand: "Rendall", name: "Men's T-Shirt & Shorts Set", price: "$12.40", priceCents: 1240, premium: "$9.92", meta: ["6 sizes", "1 color"], emoji: "🏃", category: "clothing", subcategory: "Sets & Shorts", description: "Matching tee and shorts set. Top: 180gsm cotton. Bottom: 220gsm polyester. Includes one print on top and one on bottom.", sizes: ["S", "M", "L", "XL", "2XL", "3XL"], colors: ["Black"], printAreas: ["front"] },
+
+  // ── Outerwear ─────────────────────────────────────────────────────────
+  { id: "mens-fleece-lined-jacket", brand: "Rendall", name: "Men's Fleece-Lined Jacket", price: "$19.60", priceCents: 1960, premium: "$15.68", meta: ["5 sizes", "3 colors"], emoji: "🧥", category: "clothing", subcategory: "Outerwear", description: "80% polyester / 20% soft fleece lined jacket. Front print only. Warm, stylish, and great for premium branded collections.", sizes: ["M", "L", "XL", "2XL", "3XL"], colors: ["Black", "Grey", "Red"], printAreas: ["front"] },
+  { id: "mens-colorblock-jacket", brand: "Rendall", name: "Men's Colorblock Fleece-Lined Jacket", price: "$19.60", priceCents: 1960, premium: "$15.68", meta: ["1 size", "2 colors"], emoji: "🧥", category: "clothing", subcategory: "Outerwear", description: "95% polyester / 5% spandex colorblock jacket with fleece lining. Front print only. Bold two-tone design.", sizes: ["M"], colors: ["Grey", "Red"], printAreas: ["front"] },
+
+  // ── Hats ──────────────────────────────────────────────────────────────
+  { id: "vintage-wash-baseball-cap", brand: "Rendall", name: "Vintage Wash Denim Baseball Cap", price: "$5.80", priceCents: 580, premium: "$4.64", meta: ["OSFM", "7 colors"], emoji: "🧢", category: "accessories", subcategory: "Hats", description: "100% washed cotton denim baseball cap. Adjustable strap. Single-sided DTF print on front panel.", sizes: ["OSFM"], colors: ["Black", "Grey", "Charcoal", "Red", "Navy", "Mid-Blue", "Sand"], printAreas: ["front"] },
+  { id: "vintage-wash-trucker-hat", brand: "Rendall", name: "Vintage Wash Denim Trucker Hat", price: "$5.80", priceCents: 580, premium: "$4.64", meta: ["OSFM", "4 colors"], emoji: "🧢", category: "accessories", subcategory: "Hats", description: "Cotton front panel with breathable mesh back. Vintage wash finish with adjustable snapback. Single-sided print.", sizes: ["OSFM"], colors: ["Black", "Grey", "Navy", "Sand"], printAreas: ["front"] },
+  { id: "classic-6-panel-cap", brand: "Rendall", name: "Classic 6-Panel Sandwich Bill Cap", price: "$5.80", priceCents: 580, premium: "$4.64", meta: ["OSFM", "7 colors"], emoji: "🧢", category: "accessories", subcategory: "Hats", description: "100% polyester 6-panel cap with contrasting sandwich bill detail. Structured front for clean DTF prints.", sizes: ["OSFM"], colors: ["Black", "White", "Grey", "Red", "Mid-Blue", "Navy", "Khaki"], printAreas: ["front"] },
+  { id: "classic-5-panel-cap", brand: "Rendall", name: "Classic 5-Panel Sandwich Bill Cap", price: "$5.80", priceCents: 580, premium: "$4.64", meta: ["OSFM", "4 colors"], emoji: "🧢", category: "accessories", subcategory: "Hats", description: "100% polyester 5-panel cap with low-profile fit and sandwich bill. Clean, modern silhouette.", sizes: ["OSFM"], colors: ["Black", "White", "Red", "Blue"], printAreas: ["front"] },
+
+  // ── Bags ───────────────────────────────────────────────────────────────
+  { id: "heavyweight-canvas-tote", brand: "Rendall", name: "Heavyweight Canvas Tote Bag", price: "$5.00", priceCents: 500, premium: "$4.00", meta: ["OSFM", "1 color"], emoji: "👜", category: "accessories", subcategory: "Bags", description: "12oz canvas tote bag (65% polyester / 35% cotton). Durable and spacious. Single-sided DTF print.", sizes: ["OSFM"], colors: ["White / Natural"], printAreas: ["front"] },
+
+  // ── Test ───────────────────────────────────────────────────────────────
+  {
+    id: "product-designer-test",
+    brand: "Rendall",
+    name: "Product Designer Test",
+    price: "$5.00",
+    priceCents: 500,
+    premium: "$4.00",
+    meta: ["6 sizes", "3 colors"],
+    emoji: "👕",
+    category: "clothing",
+    subcategory: "T-Shirts",
+    description: "Test product for designer development.",
+    sizes: ["S", "M", "L", "XL", "2XL", "3XL"],
+    colors: ["Black", "White", "Grey"],
+    printAreas: ["front", "back"],
+    photos: {
+      front: "/Product Designer Test Assets/Front.png",
+      back: "/Product Designer Test Assets/Back.png",
+    },
+    measurements: {
+      widthBySize: { S: 20.5, M: 22, L: 23.5, XL: 25, "2XL": 26.75, "3XL": 28.25 },
+      lengthBySize: { S: 26.25, M: 27.25, L: 28.25, XL: 29.25, "2XL": 30.25, "3XL": 31.25 },
+      printSpecs: {
+        front: { widthMm: 300, heightMm: 400, topOffsetMm: 80, overlay: { left: 0.31, top: 0.27, width: 0.38, height: 0.38 } },
+        back: { widthMm: 300, heightMm: 400, topOffsetMm: 60, overlay: { left: 0.30, top: 0.20, width: 0.40, height: 0.40 } },
+      },
+    },
+  },
 ];
 
-const accessories: Product[] = [
-  { id: "iphone-tough-case", brand: "Generic", name: "iPhone Tough Case", price: "$12.35", priceCents: 1235, premium: "$9.88", meta: ["15 models", "1 color", "5 providers"], emoji: "📱", category: "accessories", description: "Dual-layer tough case with impact-resistant polycarbonate shell. Available for the latest iPhone models.", sizes: ["iPhone 13", "iPhone 14", "iPhone 14 Pro", "iPhone 15", "iPhone 15 Pro"], colors: ["Clear"], printAreas: ["back"] },
-  { id: "samsung-snap-case", brand: "Generic", name: "Samsung Snap Case", price: "$11.20", priceCents: 1120, premium: "$8.96", meta: ["12 models", "1 color", "4 providers"], emoji: "📱", category: "accessories", description: "Slim snap-on case for Samsung Galaxy devices. Lightweight with vivid edge-to-edge printing.", sizes: ["Galaxy S23", "Galaxy S23+", "Galaxy S24", "Galaxy S24+"], colors: ["Clear"], printAreas: ["back"] },
-  { id: "cotton-canvas-tote", brand: "Generic", name: "Cotton Canvas Tote Bag", price: "$10.45", priceCents: 1045, premium: "$8.36", meta: ["1 size", "5 colors", "8 providers"], emoji: "🎒", category: "accessories", description: "Sturdy cotton canvas tote with reinforced handles. Generous print area on both sides.", sizes: ["One Size"], colors: ["Natural", "Black", "Navy", "Red", "Light Blue"], printAreas: ["front", "back"] },
-  { id: "kiss-cut-stickers", brand: "Generic", name: "Kiss-Cut Stickers", price: "$2.16", priceCents: 216, premium: "$1.73", meta: ["6 sizes", "1 color", "6 providers"], emoji: "📌", category: "accessories", description: "Premium vinyl kiss-cut stickers. Waterproof, scratch-resistant, and easy to peel. Great add-on product.", sizes: ["2×2\"", "3×3\"", "4×4\"", "5×5\"", "5.5×5.5\"", "6×6\""], colors: ["White"], printAreas: ["front"] },
-  { id: "unisex-crew-socks", brand: "Generic", name: "Unisex Crew Socks", price: "$8.90", priceCents: 890, premium: "$7.12", meta: ["3 sizes", "1 color", "4 providers"], emoji: "🧦", category: "accessories", description: "Cushioned crew socks with all-over sublimation printing. Comfortable polyester blend with reinforced toe and heel.", sizes: ["S", "M", "L"], colors: ["White"], printAreas: ["all-over"] },
-  { id: "snapback-trucker-cap", brand: "Yupoong", name: "Snapback Trucker Cap", price: "$14.30", priceCents: 1430, premium: "$11.44", meta: ["1 size", "12 colors", "6 providers"], emoji: "🎩", category: "accessories", description: "Classic structured trucker cap with mesh back and adjustable snapback closure. Embroidery or print on front panel.", sizes: ["One Size"], colors: ["White/Black", "Black", "Navy", "Red", "Charcoal", "Camo"], printAreas: ["front"] },
-  { id: "aop-backpack", brand: "AOP", name: "All-Over Print Backpack", price: "$38.50", priceCents: 3850, premium: "$30.80", meta: ["1 size", "1 color", "3 providers"], emoji: "💼", category: "accessories", description: "Full all-over print backpack with padded straps and laptop compartment. Statement piece for any brand.", sizes: ["One Size"], colors: ["White"], printAreas: ["all-over"] },
-  { id: "embroidered-beanie", brand: "Generic", name: "Embroidered Beanie", price: "$16.75", priceCents: 1675, premium: "$13.40", meta: ["1 size", "8 colors", "5 providers"], emoji: "🧶", category: "accessories", description: "Cuffed knit beanie with custom embroidery. Soft acrylic blend with a snug, one-size-fits-most fit.", sizes: ["One Size"], colors: ["Black", "Navy", "Heather Grey", "White", "Red", "Forest Green", "Burgundy", "Camel"], printAreas: ["front"] },
-  { id: "mouse-pad", brand: "Generic", name: "Mouse Pad", price: "$6.80", priceCents: 680, premium: "$5.44", meta: ["3 sizes", "1 color", "4 providers"], emoji: "🖱", category: "accessories", description: "Smooth fabric top with non-slip rubber base. Vibrant edge-to-edge printing.", sizes: ["Small", "Medium", "Large"], colors: ["White"], printAreas: ["front"] },
-  { id: "fanny-pack", brand: "Generic", name: "Fanny Pack", price: "$19.50", priceCents: 1950, premium: "$15.60", meta: ["1 size", "1 color", "3 providers"], emoji: "🧳", category: "accessories", description: "All-over print fanny pack with adjustable strap and zip compartment. Trendy and functional.", sizes: ["One Size"], colors: ["White"], printAreas: ["all-over"] },
-];
-
-const home: Product[] = [
-  { id: "white-ceramic-mug-11oz", brand: "ORCA Coatings", name: "White Ceramic Mug 11oz", price: "$5.20", priceCents: 520, premium: "$4.16", meta: ["1 size", "1 color", "12 providers"], emoji: "☕", category: "home", description: "Classic 11oz white ceramic mug with a glossy finish. Dishwasher and microwave safe. The #1 best-selling POD product.", sizes: ["11oz"], colors: ["White"], printAreas: ["wrap"] },
-  { id: "black-mug", brand: "Generic", name: "Black Mug 11oz / 15oz", price: "$7.19", priceCents: 719, premium: "$5.75", meta: ["2 sizes", "1 color", "5 providers"], emoji: "☕", category: "home", description: "Matte black ceramic mug available in 11oz and 15oz. Designs pop against the dark background.", sizes: ["11oz", "15oz"], colors: ["Black"], printAreas: ["wrap"] },
-  { id: "ceramic-coffee-cup", brand: "ORCA Coatings", name: "Ceramic Coffee Cup", price: "$5.31", priceCents: 531, premium: "$4.25", meta: ["2 sizes", "1 color", "2 providers"], emoji: "☕", category: "home", description: "Premium ceramic coffee cup with ergonomic handle. Available in two sizes with full-wrap printing.", sizes: ["11oz", "15oz"], colors: ["White"], printAreas: ["wrap"] },
-  { id: "matte-poster", brand: "Generic", name: "Matte Poster", price: "$5.65", priceCents: 565, premium: "$4.52", meta: ["12 sizes", "1 color", "8 providers"], emoji: "🖼", category: "home", description: "Museum-quality matte poster on thick, durable paper. Vivid colors with a smooth, non-glare finish.", sizes: ["8×10\"", "11×14\"", "12×16\"", "12×18\"", "16×20\"", "18×24\"", "24×36\""], colors: ["White"], printAreas: ["front"] },
-  { id: "canvas-print", brand: "Generic", name: "Canvas Print", price: "$14.20", priceCents: 1420, premium: "$11.36", meta: ["10 sizes", "1 color", "6 providers"], emoji: "🖼", category: "home", description: "Gallery-wrapped canvas print on premium poly-cotton blend. Arrives ready to hang with finished edges.", sizes: ["8×10\"", "11×14\"", "12×16\"", "16×20\"", "18×24\"", "24×36\""], colors: ["White"], printAreas: ["front"] },
-  { id: "scented-soy-candle", brand: "Generic", name: "Scented Soy Candle", price: "$10.82", priceCents: 1082, premium: "$8.66", meta: ["3 sizes", "3 scents", "2 providers"], emoji: "🕯", category: "home", description: "Hand-poured soy wax candle in a reusable glass jar. Custom label printing with your design.", sizes: ["4oz", "9oz", "16oz"], colors: ["Clear Glass"], printAreas: ["label"] },
-  { id: "sherpa-fleece-blanket", brand: "Generic", name: "Sherpa Fleece Blanket", price: "$28.50", priceCents: 2850, premium: "$22.80", meta: ["3 sizes", "1 color", "5 providers"], emoji: "🧣", category: "home", description: "Soft sherpa fleece blanket with all-over print on one side. Cozy, plush, and machine washable.", sizes: ["30×40\"", "50×60\"", "60×80\""], colors: ["White"], printAreas: ["front"] },
-  { id: "throw-pillow-case", brand: "Generic", name: "Throw Pillow Case", price: "$9.40", priceCents: 940, premium: "$7.52", meta: ["4 sizes", "1 color", "4 providers"], emoji: "🛋", category: "home", description: "Double-sided throw pillow case with hidden zipper. Machine washable polyester broadcloth.", sizes: ["14×14\"", "16×16\"", "18×18\"", "20×20\""], colors: ["White"], printAreas: ["front", "back"] },
-  { id: "stainless-steel-water-bottle", brand: "Generic", name: "Stainless Steel Water Bottle", price: "$15.60", priceCents: 1560, premium: "$12.48", meta: ["2 sizes", "4 colors", "3 providers"], emoji: "🍶", category: "home", description: "Double-wall vacuum insulated water bottle. Keeps drinks cold 24hrs or hot 12hrs. Custom wrap print.", sizes: ["20oz", "32oz"], colors: ["White", "Black", "Silver", "Blue"], printAreas: ["wrap"] },
-  { id: "spiral-notebook", brand: "Generic", name: "Spiral Notebook", price: "$8.15", priceCents: 815, premium: "$6.52", meta: ["2 sizes", "1 color", "4 providers"], emoji: "🌱", category: "home", description: "Spiral-bound notebook with custom printed cover. 120 lined pages on quality paper.", sizes: ["5.5×8.5\"", "8.5×11\""], colors: ["White"], printAreas: ["front cover", "back cover"] },
-  { id: "bath-towel", brand: "Generic", name: "Bath Towel", price: "$19.90", priceCents: 1990, premium: "$15.92", meta: ["2 sizes", "1 color", "3 providers"], emoji: "🧖", category: "home", description: "Soft microfiber bath towel with all-over sublimation print. Lightweight and quick-drying.", sizes: ["27×55\"", "30×60\""], colors: ["White"], printAreas: ["front"] },
-  { id: "greeting-card", brand: "Generic", name: "Greeting Card (Folded)", price: "$3.45", priceCents: 345, premium: "$2.76", meta: ["3 sizes", "1 color", "3 providers"], emoji: "🎈", category: "home", description: "Folded greeting card on premium cardstock with matching envelope. Perfect for seasonal collections.", sizes: ["4×6\"", "5×7\"", "A7"], colors: ["White"], printAreas: ["front", "inside", "back"] },
-];
-
-export const allProducts: Product[] = [...clothing, ...accessories, ...home];
-
-export const categories = [
-  { id: "clothing", label: "Clothing", products: clothing },
-  { id: "accessories", label: "Accessories", products: accessories },
-  { id: "home", label: "Home & Living", products: home },
+// Ordered subcategories for catalog display
+export const subcategories = [
+  "T-Shirts",
+  "Kids",
+  "Hoodies & Sweatshirts",
+  "Tank Tops",
+  "Polos",
+  "Sets & Shorts",
+  "Outerwear",
+  "Hats",
+  "Bags",
 ] as const;
+
+export function getProductHero(product: Product): string {
+  return product.heroImage ?? `/products/${product.id}.png`;
+}
+
+function colorKey(color: string): string {
+  return color.toLowerCase().replace(/\s+/g, "");
+}
+
+/** Resolve the garment photo shown in the designer for a given side + color.
+ *  Prefers colorImages[color][side], falls back to the color's front, then to photos[side]. */
+export function getDesignerPhoto(product: Product, side: string, color: string): string | undefined {
+  const key = colorKey(color);
+  const byColor = product.colorImages?.[key];
+  if (byColor) {
+    if (side === "back" && byColor.back) return byColor.back;
+    return byColor.front;
+  }
+  return product.photos?.[side];
+}
+
+/** Whether a real photo exists for this side+color (used to disable side toggle when a back is missing). */
+export function hasSidePhoto(product: Product, side: string, color: string): boolean {
+  const key = colorKey(color);
+  const byColor = product.colorImages?.[key];
+  if (byColor) {
+    if (side === "front") return true;
+    if (side === "back") return !!byColor.back;
+  }
+  return !!product.photos?.[side];
+}
 
 export function getProductById(id: string): Product | undefined {
   return allProducts.find((p) => p.id === id);
 }
 
-export function getProductsByCategory(category: Product["category"]): Product[] {
-  return allProducts.filter((p) => p.category === category);
+export function getProductsBySubcategory(sub: string): Product[] {
+  return allProducts.filter((p) => p.subcategory === sub);
 }
