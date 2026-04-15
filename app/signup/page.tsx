@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { signUpAction } from "./actions";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -15,20 +15,10 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
 
-    const form = new FormData(e.currentTarget);
-    const email = form.get("email") as string;
-    const password = form.get("password") as string;
-    const displayName = form.get("displayName") as string;
+    const result = await signUpAction(new FormData(e.currentTarget));
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: displayName } },
-    });
-
-    if (error) {
-      setError(error.message);
+    if (!result.ok) {
+      setError(result.error);
       setLoading(false);
       return;
     }

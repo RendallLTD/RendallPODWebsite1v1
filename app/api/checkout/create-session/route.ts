@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 import { getProductById } from "@/lib/products";
+import { enforce, getClientIp, limiters } from "@/lib/ratelimit";
+import { headers } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -31,6 +33,11 @@ type CheckoutLineItem = NonNullable<
 
 export async function POST() {
   try {
+    const reqHeaders = await headers();
+    const ip = getClientIp({ headers: reqHeaders } as Request);
+    const blocked = await enforce(limiters.checkout, ip);
+    if (blocked) return blocked;
+
     const supabase = await createClient();
     const {
       data: { user },

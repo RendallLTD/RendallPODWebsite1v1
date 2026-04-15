@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { enforce, getClientIp, limiters } from "@/lib/ratelimit";
 
 const protectedPaths = ["/dashboard", "/design", "/checkout"];
 
@@ -21,6 +22,20 @@ export async function proxy(request: NextRequest) {
         status: 401,
         headers: { "WWW-Authenticate": 'Basic realm="Rendall"' },
       });
+    }
+  }
+
+  // Rate limit sensitive paths by IP. Webhook is excluded — Stripe verifies
+  // signature, and rate limiting Stripe's webhook delivery would be wrong.
+  const path = request.nextUrl.pathname;
+  if (!path.startsWith("/api/webhooks/")) {
+    const ip = getClientIp(request);
+    if (path === "/signup" || path === "/login") {
+      const blocked = await enforce(limiters.auth, `auth:${ip}`);
+      if (blocked) return blocked;
+    } else if (path.startsWith("/api/")) {
+      const blocked = await enforce(limiters.api, `api:${ip}`);
+      if (blocked) return blocked;
     }
   }
 

@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { loginAction } from "./actions";
 
 const DEFAULT_REDIRECT = "/dashboard";
 
@@ -43,15 +43,10 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
-    const form = new FormData(e.currentTarget);
-    const email = form.get("email") as string;
-    const password = form.get("password") as string;
+    const result = await loginAction(new FormData(e.currentTarget));
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError(error.message);
+    if (!result.ok) {
+      setError(result.error);
       setLoading(false);
       return;
     }

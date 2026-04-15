@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getProductById, getDesignerPhoto, hasSidePhoto } from "@/lib/products";
+import { getProductById, getDesignerPhoto, hasSidePhoto, type Product } from "@/lib/products";
 import { createClient } from "@/lib/supabase/client";
 import ImageUploader from "@/components/design/ImageUploader";
 import DesignCanvas from "@/components/design/DesignCanvas";
@@ -22,6 +22,43 @@ function emptySide(): SideState {
 let layerIdCounter = 0;
 function nextLayerId() {
   return `layer-${++layerIdCounter}`;
+}
+
+// Serialize every persisted layer with its artwork reference, skipping sides
+// that aren't valid for the currently selected color. Prevents silent data
+// loss (Codex #1) and saving hidden back-side artwork (Codex #3).
+function buildDesignPayload(
+  product: Product,
+  sides: Record<string, SideState>,
+  selectedSize: string,
+  selectedColor: string
+) {
+  const sidesConfig: Record<
+    string,
+    Array<{ image: string; position: { x: number; y: number }; scale: number }>
+  > = {};
+  for (const [side, state] of Object.entries(sides)) {
+    if (state.layers.length === 0) continue;
+    if (!hasSidePhoto(product, side, selectedColor)) continue;
+    sidesConfig[side] = state.layers.map((l) => ({
+      image: l.image,
+      position: l.position,
+      scale: l.scale,
+    }));
+  }
+
+  const primaryImage =
+    sidesConfig.front?.[0]?.image ??
+    Object.values(sidesConfig)[0]?.[0]?.image ??
+    "";
+
+  const designConfig = {
+    size: selectedSize,
+    color: selectedColor,
+    sides: sidesConfig,
+  };
+
+  return { designConfig, primaryImage };
 }
 
 export default function DesignPage({
@@ -44,6 +81,9 @@ export default function DesignPage({
   const [selectedSize, setSelectedSize] = useState(product?.sizes[0] ?? "");
   const [selectedColor, setSelectedColor] = useState(product?.colors[0] ?? "");
   const [saving, setSaving] = useState(false);
+  // Synchronous guard against double-clicks on Add-to-cart — setSaving(true)
+  // doesn't block re-entry during the same event loop tick. Closes Codex #2.
+  const addToCartInFlight = useRef(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [designRenderedSize, setDesignRenderedSize] = useState<{ w: number; h: number } | null>(null);
   // For triggering the file input from "Add design" button
@@ -234,27 +274,20 @@ export default function DesignPage({
       return;
     }
 
-    const designConfig: Record<string, unknown> = {
-      size: selectedSize,
-      color: selectedColor,
-      sides: {} as Record<string, unknown>,
-    };
-    for (const [side, state] of Object.entries(sides)) {
-      if (state.layers.length > 0) {
-        (designConfig.sides as Record<string, unknown>)[side] = state.layers.map((l) => ({
-          position: l.position,
-          scale: l.scale,
-        }));
-      }
+    const { designConfig, primaryImage } = buildDesignPayload(
+      product,
+      sides,
+      selectedSize,
+      selectedColor
+    );
+
+    if (!primaryImage) {
+      setSaving(false);
+      alert("Your design has no valid artwork for the selected color.");
+      return;
     }
 
-    // Use first layer of front side as primary image
-    const primaryImage =
-      sides.front?.layers[0]?.image ??
-      Object.values(sides).find((s) => s.layers.length > 0)?.layers[0]?.image ??
-      "";
-
-    await supabase.from("designs").insert({
+    const { error } = await supabase.from("designs").insert({
       user_id: user.id,
       product_id: product.id,
       name: `${product.name} Design`,
@@ -262,63 +295,77 @@ export default function DesignPage({
       design_config: designConfig,
     });
     setSaving(false);
+    if (error) {
+      alert("Failed to save design.");
+      return;
+    }
     alert("Design saved!");
   }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router]);
 
   const handleAddToCart = useCallback(async () => {
+    if (addToCartInFlight.current) return;
     if (!hasAnyDesign || !product) return;
+    addToCartInFlight.current = true;
     setSaving(true);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    const designConfig: Record<string, unknown> = {
-      size: selectedSize,
-      color: selectedColor,
-      sides: {} as Record<string, unknown>,
-    };
-    for (const [side, state] of Object.entries(sides)) {
-      if (state.layers.length > 0) {
-        (designConfig.sides as Record<string, unknown>)[side] = state.layers.map((l) => ({
-          position: l.position,
-          scale: l.scale,
-        }));
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
       }
-    }
 
-    const primaryImage =
-      sides.front?.layers[0]?.image ??
-      Object.values(sides).find((s) => s.layers.length > 0)?.layers[0]?.image ??
-      "";
+      const { designConfig, primaryImage } = buildDesignPayload(
+        product,
+        sides,
+        selectedSize,
+        selectedColor
+      );
 
-    const { data: design } = await supabase
-      .from("designs")
-      .insert({
-        user_id: user.id,
-        product_id: product.id,
-        name: `${product.name} Design`,
-        image_url: primaryImage,
-        design_config: designConfig,
-      })
-      .select("id")
-      .single();
+      if (!primaryImage) {
+        alert("Your design has no valid artwork for the selected color.");
+        return;
+      }
 
-    if (design) {
-      await supabase.from("cart_items").insert({
+      const { data: design, error: designErr } = await supabase
+        .from("designs")
+        .insert({
+          user_id: user.id,
+          product_id: product.id,
+          name: `${product.name} Design`,
+          image_url: primaryImage,
+          design_config: designConfig,
+        })
+        .select("id")
+        .single();
+
+      if (designErr || !design) {
+        alert("Failed to save design.");
+        return;
+      }
+
+      const { error: cartErr } = await supabase.from("cart_items").insert({
         user_id: user.id,
         design_id: design.id,
         quantity: 1,
         size: selectedSize,
         color: selectedColor,
       });
+
+      if (cartErr) {
+        // Roll back the orphan design so retries don't accumulate garbage.
+        await supabase.from("designs").delete().eq("id", design.id);
+        alert("Failed to add to cart. Please try again.");
+        return;
+      }
+
       router.push("/cart");
+    } finally {
+      setSaving(false);
+      addToCartInFlight.current = false;
     }
-    setSaving(false);
   }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router]);
 
   if (!product) {
