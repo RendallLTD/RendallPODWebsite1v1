@@ -5,7 +5,7 @@ export default function ShippingPage() {
         <h1>Shipping Policy</h1>
         <p><em>Last updated: April 2026</em></p>
 
-        <p>At Rendall POD, we pride ourselves on operating our own production lines to ensure fast and reliable fulfillment for your customers.</p>
+        <p>At Rendall, we pride ourselves on operating our own production lines to ensure fast and reliable fulfillment for your customers.</p>
 
         <h2>1. Production Time (Fulfillment)</h2>
         <p>Every item is printed on demand. Standard production time takes 2 to 5 business days after the order is successfully placed and paid for. During peak holiday seasons, production times may be slightly extended, and we will notify you of any delays via the platform dashboard.</p>
@@ -26,7 +26,7 @@ export default function ShippingPage() {
 
         <h2>5. Carrier Delays</h2>
         <p>While we strive to ship your orders as fast as possible, we cannot be held responsible for delays caused by the shipping carriers (e.g., severe weather, strikes, customs holds, or high seasonal volume).</p>
-        <p>If an order is significantly delayed beyond the estimated delivery window, please contact rendall.ltd@gmail.com so we can investigate the issue.</p>
+        <p>If an order is significantly delayed beyond the estimated delivery window, please contact <a href="mailto:support@rendallpod.com">support@rendallpod.com</a> so we can investigate the issue.</p>
       </div>
     </section>
   );

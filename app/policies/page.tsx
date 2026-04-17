@@ -9,7 +9,7 @@ export default function PoliciesPage() {
         <div id="terms" style={{ paddingTop: 32 }}>
           <h2 style={{ fontSize: 28, marginBottom: 16 }}>Terms of Service</h2>
 
-          <p>Welcome to Rendall POD. By using our website, platform, and manufacturing services, you agree to comply with the following Terms of Service.</p>
+          <p>Welcome to Rendall. The platform at rendallpod.com is operated by <strong>Rendall Limited</strong> (倫德爾有限公司), a Hong Kong private company limited by shares (Companies Registry No. 80142539). By using our website, platform, and manufacturing services, you agree to comply with the following Terms of Service.</p>
 
           <h3>1. Account Responsibilities</h3>
           <p>You must be 18 years or older to create an account. You are responsible for maintaining the security of your account and password. Rendall cannot and will not be liable for any loss or damage resulting from your failure to maintain account security.</p>
@@ -30,6 +30,15 @@ export default function PoliciesPage() {
           <h3>4. Pricing and Modifications</h3>
           <p>We reserve the right to modify product prices, shipping rates, or discontinue specific blank products at any time. We will make reasonable efforts to notify merchants in advance of significant pricing changes.</p>
 
+          <h3>5. Intellectual Property Complaints</h3>
+          <p>If you believe content on our platform infringes your intellectual property rights, follow the procedure set out in our <a href="/dmca">DMCA / Takedown</a> page. We respond to all valid notices expeditiously and may suspend or terminate accounts that are the subject of repeated, valid infringement notices.</p>
+
+          <h3>6. Governing Law and Jurisdiction</h3>
+          <p>These Terms and any dispute or claim arising out of or in connection with them (including non-contractual disputes or claims) are governed by and construed in accordance with the laws of the <strong>Hong Kong Special Administrative Region</strong>. You and Rendall Limited each submit to the exclusive jurisdiction of the courts of Hong Kong SAR for the resolution of any such dispute.</p>
+
+          <h3>7. Contact</h3>
+          <p>Questions about these Terms should be sent to <a href="mailto:support@rendallpod.com">support@rendallpod.com</a> or by post to Rendall Limited, Flat B53, 2/F, Phase 1, Kwai Shing Industrial Centre, 36-40 Tai Lin Pai Road, Kwai Chung, NT, Hong Kong.</p>
+
           <p>By continuing to use our services, you accept these terms in full.</p>
         </div>
 
@@ -39,7 +48,9 @@ export default function PoliciesPage() {
         <div id="privacy" style={{ paddingTop: 32 }}>
           <h2 style={{ fontSize: 28, marginBottom: 16 }}>Privacy Policy</h2>
 
-          <p>At Rendall POD, we are committed to protecting your privacy and ensuring your personal data is handled securely. This Privacy Policy explains how we collect, use, and protect the information of merchants (you) and your end-customers when you use our Print-on-Demand services.</p>
+          <p><strong>Data controller:</strong> Rendall Limited (倫德爾有限公司), a Hong Kong private company limited by shares (Companies Registry No. 80142539, Business Registration No. 80142539-000-04-26-8), with its registered office at Flat B53, 2/F, Phase 1, Kwai Shing Industrial Centre, 36-40 Tai Lin Pai Road, Kwai Chung, NT, Hong Kong (&ldquo;Rendall&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;).</p>
+
+          <p>Rendall is committed to protecting your privacy and ensuring your personal data is handled securely. This Privacy Policy explains how we collect, use, and protect the information of merchants (you) and your end-customers when you use our Print-on-Demand services. We process personal data in line with the requirements of the Hong Kong Personal Data (Privacy) Ordinance (Cap. 486) and applicable cross-border privacy principles.</p>
 
           <h3>1. Information We Collect</h3>
           <p><strong>Merchant Information:</strong> When you register for an account, we collect your name, business name, email address, phone number, and billing information.</p>
@@ -66,7 +77,14 @@ export default function PoliciesPage() {
           <p>We implement industry-standard security measures to protect your design files, personal information, and customer data from unauthorized access, alteration, or disclosure.</p>
 
           <h3>5. Your Rights</h3>
-          <p>You have the right to access, update, or delete your account information at any time. If you wish to permanently delete your account and associated data, please contact us at rendall.ltd@gmail.com.</p>
+          <p>You have the right to access, update, or delete your account information at any time. Under the Hong Kong Personal Data (Privacy) Ordinance you also have the right to request a copy of the personal data we hold about you and to request correction of any inaccurate data. To exercise these rights, or to permanently delete your account and associated data, please contact us at <a href="mailto:support@rendallpod.com">support@rendallpod.com</a>.</p>
+
+          <h3>6. Contact &amp; Data Protection</h3>
+          <p>For privacy questions or formal data subject requests, contact:</p>
+          <ul>
+            <li><strong>Email:</strong> <a href="mailto:support@rendallpod.com">support@rendallpod.com</a></li>
+            <li><strong>Postal:</strong> Rendall Limited, Flat B53, 2/F, Phase 1, Kwai Shing Industrial Centre, 36-40 Tai Lin Pai Road, Kwai Chung, NT, Hong Kong</li>
+          </ul>
         </div>
 
         <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "40px 0" }} />
@@ -75,7 +93,7 @@ export default function PoliciesPage() {
         <div id="refund" style={{ paddingTop: 32 }}>
           <h2 style={{ fontSize: 28, marginBottom: 16 }}>Refund Policy</h2>
 
-          <p>Because Rendall POD operates as a Print-on-Demand factory, all products are unique and produced made-to-order specifically for your customers. Therefore, we do not support returns or exchanges for buyer&apos;s remorse, wrong size ordered, or wrong color chosen.</p>
+          <p>Because Rendall operates as a Print-on-Demand factory, all products are unique and produced made-to-order specifically for your customers. Therefore, we do not support returns or exchanges for buyer&apos;s remorse, wrong size ordered, or wrong color chosen.</p>
           <p>However, we stand behind the quality of our production and offer a comprehensive <strong>30-Day Guarantee</strong> for defective items.</p>
 
           <h3>1. Damaged or Defective Products</h3>
@@ -90,7 +108,7 @@ export default function PoliciesPage() {
           <h3>3. Invalid Shipping Addresses</h3>
           <p>If you or your customer provides an address that is considered insufficient by the courier, the shipment will be returned to our facility. You will be liable for reshipment costs once we have confirmed an updated address with you.</p>
 
-          <p>To initiate a claim, please contact our support team at rendall.ltd@gmail.com with your Order ID and photographic evidence.</p>
+          <p>To initiate a claim, please contact our support team at <a href="mailto:support@rendallpod.com">support@rendallpod.com</a> with your Order ID and photographic evidence.</p>
         </div>
 
         <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "40px 0" }} />
@@ -99,7 +117,7 @@ export default function PoliciesPage() {
         <div id="shipping" style={{ paddingTop: 32 }}>
           <h2 style={{ fontSize: 28, marginBottom: 16 }}>Shipping Policy</h2>
 
-          <p>At Rendall POD, we pride ourselves on operating our own production lines to ensure fast and reliable fulfillment for your customers.</p>
+          <p>At Rendall, we pride ourselves on operating our own production lines to ensure fast and reliable fulfillment for your customers.</p>
 
           <h3>1. Production Time (Fulfillment)</h3>
           <p>Every item is printed on demand. Standard production time takes 2 to 5 business days after the order is successfully placed and paid for. During peak holiday seasons, production times may be slightly extended, and we will notify you of any delays via the platform dashboard.</p>
@@ -120,7 +138,7 @@ export default function PoliciesPage() {
 
           <h3>5. Carrier Delays</h3>
           <p>While we strive to ship your orders as fast as possible, we cannot be held responsible for delays caused by the shipping carriers (e.g., severe weather, strikes, customs holds, or high seasonal volume).</p>
-          <p>If an order is significantly delayed beyond the estimated delivery window, please contact rendall.ltd@gmail.com so we can investigate the issue.</p>
+          <p>If an order is significantly delayed beyond the estimated delivery window, please contact <a href="mailto:support@rendallpod.com">support@rendallpod.com</a> so we can investigate the issue.</p>
         </div>
       </div>
     </section>

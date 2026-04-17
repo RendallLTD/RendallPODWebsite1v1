@@ -95,9 +95,17 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>${(totalCents / 100).toFixed(2)}</span>
               </div>
-              <Link href="/checkout" className="btn btn--primary btn--lg" style={{ width: "100%" }}>
-                Proceed to checkout
-              </Link>
+              <button
+                type="button"
+                className="btn btn--primary btn--lg"
+                style={{ width: "100%", cursor: "not-allowed", opacity: 0.6 }}
+                disabled
+              >
+                Checkout opening soon
+              </button>
+              <p style={{ marginTop: 10, fontSize: 13, lineHeight: 1.5, opacity: 0.75, textAlign: "center" }}>
+                We&apos;re finalising our payment provider. Your cart is saved — you can return and check out as soon as we reopen.
+              </p>
               <Link href="/catalog" className="btn btn--outline" style={{ width: "100%", marginTop: 12 }}>
                 Continue shopping
               </Link>

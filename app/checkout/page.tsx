@@ -18,8 +18,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -42,24 +40,6 @@ export default function CheckoutPage() {
   }
 
   const totalCents = items.reduce((sum, item) => sum + getItemPrice(item), 0);
-
-  async function handleCheckout() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/checkout/create-session", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to start checkout");
-      const { url } = (await res.json()) as { url?: string };
-      if (!url) throw new Error("No checkout URL returned");
-      window.location.href = url;
-    } catch (e) {
-      console.error(e);
-      setError("Could not start checkout. Please try again.");
-      setSubmitting(false);
-    }
-  }
 
   if (loading) return <div className="container" style={{ padding: "80px 0" }}><p>Loading...</p></div>;
   if (items.length === 0) {
@@ -84,24 +64,16 @@ export default function CheckoutPage() {
             <span>${(totalCents / 100).toFixed(2)}</span>
           </div>
           <p style={{ marginTop: 16, fontSize: 14, opacity: 0.75 }}>
-            Shipping address and payment details are collected securely on the next page.
+            Checkout is temporarily paused while we finalise our payment provider. Your cart is saved and will be here when we reopen.
           </p>
           <button
             type="button"
             className="btn btn--primary btn--lg"
-            style={{ width: "100%", marginTop: 16 }}
-            disabled={submitting}
-            onClick={handleCheckout}
+            style={{ width: "100%", marginTop: 16, cursor: "not-allowed", opacity: 0.6 }}
+            disabled
           >
-            {submitting
-              ? "Redirecting to payment…"
-              : `Continue to payment — $${(totalCents / 100).toFixed(2)}`}
+            Checkout opening soon
           </button>
-          {error && (
-            <p className="error" style={{ marginTop: 12, color: "#c00" }}>
-              {error}
-            </p>
-          )}
         </div>
       </div>
     </section>

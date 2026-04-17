@@ -35,12 +35,23 @@ export default function Footer() {
             <Link href="/policies#refund">Refund Policy</Link>
             <Link href="/policies#terms">Terms of Service</Link>
             <Link href="/policies#shipping">Shipping Policy</Link>
+            <Link href="/dmca">DMCA / Takedown</Link>
           </div>
         </div>
-        <div className="footer__bottom">
-          <span>&copy; 2026 Rendall, Inc. All rights reserved.</span>
+        <div className="footer__bottom" style={{ flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
+          <div>
+            <div>&copy; 2026 Rendall Limited (倫德爾有限公司). All rights reserved.</div>
+            <div style={{ marginTop: 6, lineHeight: 1.6 }}>
+              Hong Kong private company limited by shares · Companies Registry No. 80142539 · Business Registration No. 80142539-000-04-26-8 · Incorporated 8 April 2026
+              <br />
+              Registered office: Flat B53, 2/F, Phase 1, Kwai Shing Industrial Centre, 36-40 Tai Lin Pai Road, Kwai Chung, NT, Hong Kong
+              <br />
+              Contact: <a href="mailto:support@rendallpod.com" style={{ color: "inherit", textDecoration: "underline" }}>support@rendallpod.com</a>
+            </div>
+          </div>
           <div className="footer__links">
             <Link href="/policies">Policies</Link>
+            <Link href="/dmca">DMCA</Link>
           </div>
         </div>
       </div>

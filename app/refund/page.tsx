@@ -5,7 +5,7 @@ export default function RefundPage() {
         <h1>Refund Policy</h1>
         <p><em>Last updated: April 2026</em></p>
 
-        <p>Because Rendall POD operates as a Print-on-Demand factory, all products are unique and produced made-to-order specifically for your customers. Therefore, we do not support returns or exchanges for buyer&apos;s remorse, wrong size ordered, or wrong color chosen.</p>
+        <p>Because Rendall operates as a Print-on-Demand factory, all products are unique and produced made-to-order specifically for your customers. Therefore, we do not support returns or exchanges for buyer&apos;s remorse, wrong size ordered, or wrong color chosen.</p>
         <p>However, we stand behind the quality of our production and offer a comprehensive <strong>30-Day Guarantee</strong> for defective items.</p>
 
         <h2>1. Damaged or Defective Products</h2>
@@ -21,7 +21,7 @@ export default function RefundPage() {
         <p>If you or your customer provides an address that is considered insufficient by the courier, the shipment will be returned to our facility. You will be liable for reshipment costs once we have confirmed an updated address with you.</p>
 
         <h2>Contact</h2>
-        <p>To initiate a claim, please contact our support team at rendall.ltd@gmail.com with your Order ID and photographic evidence.</p>
+        <p>To initiate a claim, please contact our support team at <a href="mailto:support@rendallpod.com">support@rendallpod.com</a> with your Order ID and photographic evidence.</p>
       </div>
     </section>
   );
