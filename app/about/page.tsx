@@ -32,19 +32,7 @@ export default function AboutPage() {
 
         <h2>Company Information</h2>
         <p>
-          Rendall is operated by <strong>Rendall Limited</strong> (Chinese name: 倫德爾有限公司), a private company limited by shares incorporated in Hong Kong SAR under the Companies Ordinance (Cap. 622).
-        </p>
-        <ul>
-          <li><strong>Legal entity:</strong> Rendall Limited / 倫德爾有限公司</li>
-          <li><strong>Jurisdiction:</strong> Hong Kong SAR</li>
-          <li><strong>Companies Registry No.:</strong> 80142539</li>
-          <li><strong>Business Registration No.:</strong> 80142539-000-04-26-8</li>
-          <li><strong>Incorporation date:</strong> 8 April 2026</li>
-          <li><strong>Registered office:</strong> Flat B53, 2/F, Phase 1, Kwai Shing Industrial Centre, 36-40 Tai Lin Pai Road, Kwai Chung, NT, Hong Kong</li>
-          <li><strong>Contact:</strong> <a href="mailto:support@rendallpod.com">support@rendallpod.com</a></li>
-        </ul>
-        <p>
-          For intellectual-property and content takedown requests, see our <Link href="/dmca">DMCA / Takedown procedure</Link>.
+          Rendall is operated by <strong>Rendall Limited</strong> (倫德爾有限公司), a Hong Kong private company limited by shares. Full registration details and our registered office appear in the site footer. For intellectual-property and content takedown requests, see our <Link href="/dmca">DMCA / Takedown procedure</Link>.
         </p>
       </div>
     </section>
