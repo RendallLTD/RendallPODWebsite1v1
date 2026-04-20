@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -16,6 +17,17 @@ export default function Header() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    // Simple HEAD-style probe: ask the admin gate by fetching /admin and
+    // checking whether we get redirected. Keeps the admin UUID list off the
+    // client bundle (env-backed; server-only).
+    fetch("/api/admin/whoami", { method: "GET" })
+      .then((r) => r.ok)
+      .then(setIsAdmin)
+      .catch(() => setIsAdmin(false));
+  }, [user]);
 
   return (
     <header className="header">
@@ -31,6 +43,9 @@ export default function Header() {
         <div className="header__actions">
           {user ? (
             <>
+              {isAdmin && (
+                <Link href="/admin" className="btn btn--outline btn--sm">Admin</Link>
+              )}
               <Link href="/dashboard" className="btn btn--outline btn--sm">Dashboard</Link>
               <Link href="/cart" className="header__cart" aria-label="Cart">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">

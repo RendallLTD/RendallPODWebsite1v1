@@ -5,8 +5,9 @@ import { enforce, getClientIp, limiters } from "@/lib/ratelimit";
 const protectedPaths = ["/dashboard", "/design", "/checkout"];
 
 export async function proxy(request: NextRequest) {
-  // Rate limit sensitive paths by IP. Webhook is excluded — Stripe verifies
-  // signature, and rate limiting Stripe's webhook delivery would be wrong.
+  // Rate limit sensitive paths by IP. Payment-provider webhook paths under
+  // /api/webhooks/ are excluded because they verify signatures themselves and
+  // rate limiting a provider's retries would drop valid deliveries.
   const path = request.nextUrl.pathname;
   if (!path.startsWith("/api/webhooks/")) {
     const ip = getClientIp(request);

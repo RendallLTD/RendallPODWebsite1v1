@@ -6,8 +6,9 @@ import { getProductById, getDesignerPhoto, hasSidePhoto, type Product } from "@/
 import { createClient } from "@/lib/supabase/client";
 import ImageUploader from "@/components/design/ImageUploader";
 import DesignCanvas from "@/components/design/DesignCanvas";
-import type { DesignLayer } from "@/components/design/DesignCanvas";
+import type { DesignLayer, LayerNaturalSize } from "@/components/design/DesignCanvas";
 import DesignControls from "@/components/design/DesignControls";
+import { aspectFitSize, pxToMm, type DesignConfigV2, type MmLayer } from "@/lib/design-schema";
 import { use } from "react";
 
 type SideState = {
@@ -24,27 +25,47 @@ function nextLayerId() {
   return `layer-${++layerIdCounter}`;
 }
 
-// Serialize every persisted layer with its artwork reference, skipping sides
-// that aren't valid for the currently selected color. Prevents silent data
-// loss (Codex #1) and saving hidden back-side artwork (Codex #3).
+// Emit mm-based schema (DesignConfigV2). Needs the print-area DOM size and
+// each layer's natural (image-file) pixel dimensions to convert the UI's
+// viewport-pixel drag position + aspect-fit scale into physical mm on the
+// garment. Skips sides that aren't valid for the currently-selected color
+// (Codex #1 + #3 carried forward from the v1 payload builder).
 function buildDesignPayload(
   product: Product,
   sides: Record<string, SideState>,
   selectedSize: string,
-  selectedColor: string
-) {
-  const sidesConfig: Record<
-    string,
-    Array<{ image: string; position: { x: number; y: number }; scale: number }>
-  > = {};
+  selectedColor: string,
+  printAreaPx: { w: number; h: number } | null,
+  naturalByLayer: Record<string, LayerNaturalSize>
+): { designConfig: DesignConfigV2; primaryImage: string } | null {
+  if (!printAreaPx || printAreaPx.w === 0 || printAreaPx.h === 0) return null;
+
+  const sidesConfig: Record<string, MmLayer[]> = {};
+
   for (const [side, state] of Object.entries(sides)) {
     if (state.layers.length === 0) continue;
     if (!hasSidePhoto(product, side, selectedColor)) continue;
-    sidesConfig[side] = state.layers.map((l) => ({
-      image: l.image,
-      position: l.position,
-      scale: l.scale,
-    }));
+    const spec = product.measurements?.printSpecs?.[side];
+    if (!spec) continue;
+
+    const mmLayers: MmLayer[] = [];
+    for (const layer of state.layers) {
+      const natural = naturalByLayer[layer.id];
+      if (!natural) continue;
+
+      const base = aspectFitSize(natural.w, natural.h, printAreaPx.w, printAreaPx.h);
+      const renderedPxW = base.w * layer.scale;
+      const renderedPxH = base.h * layer.scale;
+
+      mmLayers.push({
+        image: layer.image,
+        xMm: pxToMm(layer.position.x, printAreaPx.w, spec.widthMm),
+        yMm: pxToMm(layer.position.y, printAreaPx.h, spec.heightMm),
+        widthMm: pxToMm(renderedPxW, printAreaPx.w, spec.widthMm),
+        heightMm: pxToMm(renderedPxH, printAreaPx.h, spec.heightMm),
+      });
+    }
+    if (mmLayers.length > 0) sidesConfig[side] = mmLayers;
   }
 
   const primaryImage =
@@ -52,7 +73,8 @@ function buildDesignPayload(
     Object.values(sidesConfig)[0]?.[0]?.image ??
     "";
 
-  const designConfig = {
+  const designConfig: DesignConfigV2 = {
+    schemaVersion: 2,
     size: selectedSize,
     color: selectedColor,
     sides: sidesConfig,
@@ -88,6 +110,21 @@ export default function DesignPage({
   const [designRenderedSize, setDesignRenderedSize] = useState<{ w: number; h: number } | null>(null);
   // For triggering the file input from "Add design" button
   const [pendingUpload, setPendingUpload] = useState(false);
+  // Print-area DOM ref + per-layer natural sizes, captured from DesignCanvas
+  // callbacks so we can convert to mm at save time.
+  const printAreaRef = useRef<HTMLDivElement | null>(null);
+  const [naturalByLayer, setNaturalByLayer] = useState<Record<string, LayerNaturalSize>>({});
+
+  const handlePrintAreaRef = useCallback((el: HTMLDivElement | null) => {
+    printAreaRef.current = el;
+  }, []);
+
+  const handleLayerNaturalSize = useCallback(
+    (layerId: string, size: LayerNaturalSize) => {
+      setNaturalByLayer((prev) => ({ ...prev, [layerId]: size }));
+    },
+    []
+  );
 
   // If user switches to a color that lacks the current side's photo, fall back to front
   useEffect(() => {
@@ -217,7 +254,7 @@ export default function DesignPage({
   const handleAlign = useCallback(
     (alignment: string) => {
       if (!current.activeLayerId || !designRenderedSize) return;
-      const pa = document.querySelector(".design-canvas__print-area") as HTMLElement | null;
+      const pa = printAreaRef.current;
       if (!pa) return;
 
       const paW = pa.clientWidth;
@@ -262,6 +299,12 @@ export default function DesignPage({
 
   const hasAnyDesign = Object.values(sides).some((s) => s.layers.length > 0);
 
+  const getPrintAreaPx = useCallback((): { w: number; h: number } | null => {
+    const pa = printAreaRef.current;
+    if (!pa) return null;
+    return { w: pa.clientWidth, h: pa.clientHeight };
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!hasAnyDesign || !product) return;
     setSaving(true);
@@ -274,14 +317,16 @@ export default function DesignPage({
       return;
     }
 
-    const { designConfig, primaryImage } = buildDesignPayload(
+    const payload = buildDesignPayload(
       product,
       sides,
       selectedSize,
-      selectedColor
+      selectedColor,
+      getPrintAreaPx(),
+      naturalByLayer
     );
 
-    if (!primaryImage) {
+    if (!payload || !payload.primaryImage) {
       setSaving(false);
       alert("Your design has no valid artwork for the selected color.");
       return;
@@ -291,8 +336,8 @@ export default function DesignPage({
       user_id: user.id,
       product_id: product.id,
       name: `${product.name} Design`,
-      image_url: primaryImage,
-      design_config: designConfig,
+      image_url: payload.primaryImage,
+      design_config: payload.designConfig,
     });
     setSaving(false);
     if (error) {
@@ -300,7 +345,7 @@ export default function DesignPage({
       return;
     }
     alert("Design saved!");
-  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router]);
+  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router, getPrintAreaPx, naturalByLayer]);
 
   const handleAddToCart = useCallback(async () => {
     if (addToCartInFlight.current) return;
@@ -317,14 +362,16 @@ export default function DesignPage({
         return;
       }
 
-      const { designConfig, primaryImage } = buildDesignPayload(
+      const payload = buildDesignPayload(
         product,
         sides,
         selectedSize,
-        selectedColor
+        selectedColor,
+        getPrintAreaPx(),
+        naturalByLayer
       );
 
-      if (!primaryImage) {
+      if (!payload || !payload.primaryImage) {
         alert("Your design has no valid artwork for the selected color.");
         return;
       }
@@ -335,8 +382,8 @@ export default function DesignPage({
           user_id: user.id,
           product_id: product.id,
           name: `${product.name} Design`,
-          image_url: primaryImage,
-          design_config: designConfig,
+          image_url: payload.primaryImage,
+          design_config: payload.designConfig,
         })
         .select("id")
         .single();
@@ -366,7 +413,7 @@ export default function DesignPage({
       setSaving(false);
       addToCartInFlight.current = false;
     }
-  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router]);
+  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router, getPrintAreaPx, naturalByLayer]);
 
   if (!product) {
     return (
@@ -379,18 +426,16 @@ export default function DesignPage({
   const currentPrintSpec = product.measurements?.printSpecs?.[activeSide];
 
   let designDimensions: { widthCm: number; heightCm: number } | null = null;
-  if (currentPrintSpec && activeLayer && designRenderedSize) {
-    const pa = document.querySelector(".design-canvas__print-area") as HTMLElement | null;
-    if (pa) {
-      const paW = pa.clientWidth;
-      const paH = pa.clientHeight;
-      const pxPerMmW = paW / currentPrintSpec.widthMm;
-      const pxPerMmH = paH / currentPrintSpec.heightMm;
-      designDimensions = {
-        widthCm: designRenderedSize.w / pxPerMmW / 10,
-        heightCm: designRenderedSize.h / pxPerMmH / 10,
-      };
-    }
+  if (currentPrintSpec && activeLayer && designRenderedSize && printAreaRef.current) {
+    const pa = printAreaRef.current;
+    const paW = pa.clientWidth;
+    const paH = pa.clientHeight;
+    const pxPerMmW = paW / currentPrintSpec.widthMm;
+    const pxPerMmH = paH / currentPrintSpec.heightMm;
+    designDimensions = {
+      widthCm: designRenderedSize.w / pxPerMmW / 10,
+      heightCm: designRenderedSize.h / pxPerMmH / 10,
+    };
   }
 
   // Show uploader when no layers exist or when user clicked "Add design"
@@ -411,6 +456,8 @@ export default function DesignPage({
               onSelectLayer={handleSelectLayer}
               onDesignRenderedSize={setDesignRenderedSize}
               previewMode={previewMode}
+              onPrintAreaRef={handlePrintAreaRef}
+              onLayerNaturalSize={handleLayerNaturalSize}
             />
             {showUploader && (
               <ImageUploader

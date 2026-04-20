@@ -95,16 +95,16 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>${(totalCents / 100).toFixed(2)}</span>
               </div>
-              <button
-                type="button"
+              <Link
+                href="/checkout/shipping"
                 className="btn btn--primary btn--lg"
-                style={{ width: "100%", cursor: "not-allowed", opacity: 0.6 }}
-                disabled
+                style={{ width: "100%", display: "inline-flex", justifyContent: "center" }}
               >
-                Checkout opening soon
-              </button>
+                Continue to shipping
+              </Link>
               <p style={{ marginTop: 10, fontSize: 13, lineHeight: 1.5, opacity: 0.75, textAlign: "center" }}>
-                We&apos;re finalising our payment provider. Your cart is saved — you can return and check out as soon as we reopen.
+                Payment is being migrated to our new provider. You can place your
+                order today; we&apos;ll confirm payment once the new provider goes live.
               </p>
               <Link href="/catalog" className="btn btn--outline" style={{ width: "100%", marginTop: 12 }}>
                 Continue shopping

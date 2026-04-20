@@ -10,6 +10,8 @@ export type DesignLayer = {
   scale: number;
 };
 
+export type LayerNaturalSize = { w: number; h: number };
+
 type Props = {
   productPhoto: string | undefined;
   layers: DesignLayer[];
@@ -19,6 +21,13 @@ type Props = {
   onSelectLayer: (layerId: string) => void;
   onDesignRenderedSize: (size: { w: number; h: number } | null) => void;
   previewMode: boolean;
+  /** Callback fired with the print-area element once it mounts/unmounts.
+   *  Lets the parent read clientWidth/clientHeight at save time for px→mm
+   *  conversion without piercing the abstraction via document.querySelector. */
+  onPrintAreaRef?: (el: HTMLDivElement | null) => void;
+  /** Callback fired whenever a layer's natural image size is measured.
+   *  Parent needs this to reconstruct the rendered mm dimensions at save time. */
+  onLayerNaturalSize?: (layerId: string, size: LayerNaturalSize) => void;
 };
 
 const DEFAULT_OVERLAY: PrintAreaOverlay = {
@@ -37,8 +46,17 @@ export default function DesignCanvas({
   onSelectLayer,
   onDesignRenderedSize,
   previewMode,
+  onPrintAreaRef,
+  onLayerNaturalSize,
 }: Props) {
   const printAreaRef = useRef<HTMLDivElement>(null);
+  const setPrintAreaRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      printAreaRef.current = el;
+      onPrintAreaRef?.(el);
+    },
+    [onPrintAreaRef]
+  );
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const posAtDragStart = useRef({ x: 0, y: 0 });
@@ -246,7 +264,7 @@ export default function DesignCanvas({
 
       <div
         className={`design-canvas__print-area ${previewMode ? "design-canvas__print-area--preview" : ""}`}
-        ref={printAreaRef}
+        ref={setPrintAreaRef}
         style={{
           left: `${overlay.left * 100}%`,
           top: `${overlay.top * 100}%`,
@@ -266,10 +284,9 @@ export default function DesignCanvas({
             draggable={false}
             onLoad={(e) => {
               const img = e.currentTarget;
-              setNaturalSizes((prev) => ({
-                ...prev,
-                [layer.id]: { w: img.naturalWidth, h: img.naturalHeight },
-              }));
+              const size = { w: img.naturalWidth, h: img.naturalHeight };
+              setNaturalSizes((prev) => ({ ...prev, [layer.id]: size }));
+              onLayerNaturalSize?.(layer.id, size);
             }}
           />
         ))}

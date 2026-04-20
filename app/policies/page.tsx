@@ -70,7 +70,7 @@ export default function PoliciesPage() {
           <p>We do not sell your data or your customers&apos; data to third parties. We only share necessary information with trusted service providers to fulfill our core services. This includes:</p>
           <ul>
             <li>Shipping carriers (e.g., USPS, FedEx, local postal services) to deliver packages.</li>
-            <li>Secure payment gateways (e.g., Stripe, PayPal) to process transactions.</li>
+            <li>Secure payment gateways to process transactions.</li>
           </ul>
 
           <h3>4. Data Security</h3>
