@@ -156,7 +156,15 @@ export default function AdminOrdersTable({ orders }: { orders: OrderRow[] }) {
                 </td>
                 <td style={{ padding: 8 }}>{o.status}</td>
                 <td style={{ padding: 8 }}>{total}</td>
-                <td style={{ padding: 8 }}>{rendered}/{total}</td>
+                <td
+                  style={{
+                    padding: 8,
+                    color: rendered === total && total > 0 ? "#16a34a" : undefined,
+                    fontWeight: rendered === total && total > 0 ? 600 : undefined,
+                  }}
+                >
+                  {rendered}/{total}
+                </td>
                 <td style={{ padding: 8 }}>${(o.total_cents / 100).toFixed(2)}</td>
                 <td style={{ padding: 8 }}>{dest}</td>
                 <td style={{ padding: 8 }}>

@@ -1,12 +1,17 @@
 import type { NextConfig } from "next";
 
+// Airwallex Drop-in loads the SDK bundle from static(-demo).airwallex.com,
+// phones telemetry home to o11y(-demo).airwallex.com, and mounts PCI-scoped
+// card fields in iframes under checkout(-demo).airwallex.com. Whitelist the
+// wildcard so both demo and prod work without env-specific config.
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co",
-  "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "script-src 'self' 'unsafe-inline' https://*.airwallex.com",
+  "style-src 'self' 'unsafe-inline' https://*.airwallex.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://*.airwallex.com",
+  "font-src 'self' data: https://*.airwallex.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.airwallex.com",
+  "frame-src https://*.airwallex.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

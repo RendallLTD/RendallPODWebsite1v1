@@ -64,5 +64,5 @@ export async function renderPrintPng(params: RenderPrintParams): Promise<Buffer>
   });
 
   const out = composites.length > 0 ? canvas.composite(composites) : canvas;
-  return out.png().toBuffer();
+  return out.withMetadata({ density: dpi }).png().toBuffer();
 }

@@ -102,10 +102,6 @@ export default function CartPage() {
               >
                 Continue to shipping
               </Link>
-              <p style={{ marginTop: 10, fontSize: 13, lineHeight: 1.5, opacity: 0.75, textAlign: "center" }}>
-                Payment is being migrated to our new provider. You can place your
-                order today; we&apos;ll confirm payment once the new provider goes live.
-              </p>
               <Link href="/catalog" className="btn btn--outline" style={{ width: "100%", marginTop: 12 }}>
                 Continue shopping
               </Link>

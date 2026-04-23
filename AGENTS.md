@@ -9,3 +9,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `sharp` (image compositing for print + mockup files) is a native module. Only import it from files under `app/api/**`, `lib/render/**`, or other server-only code paths. Never import it from a client component — it will crash the browser bundle.
 - `exceljs` (XLSX generation) is also server-only in this codebase — keep imports inside `app/api/**` or `lib/xlsx/**`.
 - `resend` (email) lives server-side too; the API key is in `RESEND_API_KEY` and must never ship to the client.
+- `lib/airwallex/*` is server-only — it hits the Airwallex REST API with the scoped API key and verifies webhook signatures. Never import from a client component.
+- `@airwallex/components-sdk` is the opposite: client-only. It's dynamically imported inside `components/checkout/AirwallexDropIn.tsx`; don't import it server-side.

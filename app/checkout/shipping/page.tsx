@@ -99,7 +99,7 @@ export default function ShippingPage() {
         setError(json?.error || "Failed to create order.");
         return;
       }
-      router.push(`/checkout/placed/${json.order_id}`);
+      router.push(`/checkout/payment/${json.order_id}`);
     } catch {
       setError("Network error. Please try again.");
     } finally {

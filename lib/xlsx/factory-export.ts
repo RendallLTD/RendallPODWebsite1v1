@@ -2,8 +2,10 @@ import ExcelJS from "exceljs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isV2, type DesignConfigV2 } from "@/lib/design-schema";
 
-// Column headers match CP导入.xlsx row 1 exactly. The factory's import tool
-// keys on these strings; do not edit without matching the template.
+// Columns A–T match CP导入.xlsx row 1 exactly. The factory's import tool
+// keys on these strings; do not edit A–T without matching the template.
+// Column U is a Rendall-only addition (bundled ZIP per row) — safe to ignore
+// for the import tool.
 const HEADERS: string[] = [
   "您的订单号（选填）",      // A
   "您的清单号（选填）",      // B
@@ -25,6 +27,7 @@ const HEADERS: string[] = [
   "效果图（选填）",          // R — mockup URL
   "打印图（选填）",          // S — print file URL
   "订单备注（选填）",        // T
+  "文件包 / Files ZIP",      // U — Rendall-only: single-click zip of print + mockup + order.txt
 ];
 
 type ShippingAddress = {
@@ -72,11 +75,15 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("orders")
-    .select("id, shipping_address, order_items(id, quantity, size, color, print_url_front, mockup_url_front, designs:design_id(product_id, design_config))")
+    .select(
+      "id, shipping_address, order_items(id, quantity, size, color, print_url_front, mockup_url_front, designs:design_id(product_id, design_config))",
+    )
     .in("id", orderIds);
 
   if (error) throw error;
   const orders = (data as OrderWithItems[]) ?? [];
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rendallpod.com";
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Worksheet");
@@ -96,7 +103,7 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
       }
       void (cfg as DesignConfigV2 | undefined);
 
-      const row: (string | number | null)[] = new Array(20).fill("");
+      const row: (string | number | null)[] = new Array(21).fill("");
       row[2] = compoundSku(productId, item.color, item.size); // C
       row[3] = item.quantity; // D
       row[4] = ship.name ?? ""; // E
@@ -110,6 +117,7 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
       row[15] = item.size ?? ""; // P
       row[17] = item.mockup_url_front ?? ""; // R
       row[18] = item.print_url_front ?? ""; // S
+      row[20] = `${siteUrl}/api/factory-files/${item.id}/files.zip`; // U
 
       ws.addRow(row);
     }
