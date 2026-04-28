@@ -5,6 +5,12 @@ import OrderItemActions from "./OrderItemActions";
 
 export const dynamic = "force-dynamic";
 
+type RenderJob = {
+  status: "pending" | "running" | "done" | "failed";
+  attempts: number;
+  last_error: string | null;
+};
+
 type OrderItem = {
   id: string;
   design_id: string | null;
@@ -18,6 +24,7 @@ type OrderItem = {
   print_url_back: string | null;
   mockup_url_back: string | null;
   designs: { image_url: string | null; product_id: string } | { image_url: string | null; product_id: string }[] | null;
+  render_jobs: RenderJob | RenderJob[] | null;
 };
 
 type Order = {
@@ -40,7 +47,7 @@ export default async function AdminOrderDetailPage({
   const admin = createAdminClient();
   const { data: order, error } = await admin
     .from("orders")
-    .select("id, user_id, status, total_cents, shipping_address, cart_item_ids, created_at, order_items(id, design_id, product_name, quantity, size, color, unit_price_cents, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(image_url, product_id))")
+    .select("id, user_id, status, total_cents, shipping_address, cart_item_ids, created_at, order_items(id, design_id, product_name, quantity, size, color, unit_price_cents, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(image_url, product_id), render_jobs(status, attempts, last_error))")
     .eq("id", id)
     .single();
 
@@ -72,6 +79,7 @@ export default async function AdminOrderDetailPage({
         <div style={{ display: "grid", gap: 16 }}>
           {o.order_items.map((item) => {
             const design = Array.isArray(item.designs) ? item.designs[0] : item.designs;
+            const job = Array.isArray(item.render_jobs) ? item.render_jobs[0] : item.render_jobs;
             return (
               <div key={item.id} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 16, padding: 12, border: "1px solid var(--border, #eee)", borderRadius: 8 }}>
                 <div style={{ width: 120, height: 120, background: "var(--muted, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
@@ -85,6 +93,15 @@ export default async function AdminOrderDetailPage({
                   <div style={{ fontSize: 13, opacity: 0.7 }}>
                     Qty {item.quantity} · {item.size ?? "—"} · {item.color ?? "—"} · ${(item.unit_price_cents / 100).toFixed(2)} each
                   </div>
+                  {job && (
+                    <div style={{ fontSize: 12, marginTop: 6 }}>
+                      Render: <strong style={{ color: job.status === "failed" ? "#c0392b" : job.status === "done" ? "#27ae60" : undefined }}>{job.status}</strong>
+                      {job.attempts > 0 && <> · attempts {job.attempts}</>}
+                      {job.status === "failed" && job.last_error && (
+                        <div style={{ marginTop: 4, color: "#c0392b" }}>Last error: {job.last_error}</div>
+                      )}
+                    </div>
+                  )}
                   <div style={{ fontSize: 13, marginTop: 8 }}>
                     <div style={{ fontWeight: 500, marginBottom: 2 }}>Front</div>
                     <div>Print: {item.print_url_front ? <a href={item.print_url_front} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>

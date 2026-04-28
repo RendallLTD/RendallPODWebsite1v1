@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { renderOrderItemsForOrder } from "@/lib/render/run";
+import { enqueueRenderJobs } from "@/lib/render/queue";
 
 type Result =
   | { ok: true; alreadyPaid?: boolean }
@@ -55,12 +55,14 @@ export async function markOrderPaid(orderId: string): Promise<Result> {
     }
   }
 
-  // Fire-and-forget render so webhook/admin responses stay fast. Render
-  // failures never block payment confirmation — admin Render button remains
-  // as a manual fallback for retry.
-  void renderOrderItemsForOrder(orderId).catch((err) => {
-    console.error("[mark-paid] auto-render failed", { orderId, err });
-  });
+  // Enqueue a durable render job per order_item. Insert is fast and
+  // synchronous; the actual sharp+upload work runs from the admin worker
+  // route. Failed enqueue does NOT fail mark-paid — admin can re-trigger
+  // render from the order detail page and a job row will be created then.
+  const enq = await enqueueRenderJobs(orderId);
+  if (!enq.ok) {
+    console.error("[mark-paid] render enqueue failed", { orderId, error: enq.error });
+  }
 
   return { ok: true };
 }

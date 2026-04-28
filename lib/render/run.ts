@@ -132,18 +132,3 @@ export async function renderOrderItems(
   return { rendered, skipped };
 }
 
-export async function renderOrderItemsForOrder(orderId: string): Promise<void> {
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("order_items")
-    .select("id")
-    .eq("order_id", orderId);
-  if (error || !data || data.length === 0) {
-    if (error) console.error("[auto-render] failed to load items", { orderId, error });
-    return;
-  }
-  const { skipped } = await renderOrderItems(data.map((r) => r.id));
-  if (skipped.length > 0) {
-    console.warn("[auto-render] some items skipped", { orderId, skipped });
-  }
-}

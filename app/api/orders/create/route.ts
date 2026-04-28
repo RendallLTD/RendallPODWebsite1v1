@@ -64,9 +64,14 @@ export async function POST(request: NextRequest) {
   }
   const shipping = shippingResult.value;
 
+  // We do NOT fetch design_config or image_url here. Both are populated
+  // onto each order_items row by the BEFORE INSERT trigger added in
+  // migration 015 (copy_design_snapshot_to_order_item). That keeps the
+  // multi-MB jsonb server-side — fetching it through Node here trips the
+  // Supabase statement timeout for image-heavy designs.
   const { data: cartItems, error: cartErr } = await supabase
     .from("cart_items")
-    .select("id, design_id, quantity, size, color, design:designs(product_id, name, design_config, image_url)")
+    .select("id, design_id, quantity, size, color, design:designs(product_id, name)")
     .eq("user_id", user.id);
 
   if (cartErr) {
@@ -84,8 +89,6 @@ export async function POST(request: NextRequest) {
     size: string;
     color: string;
     unit_price_cents: number;
-    design_snapshot: unknown;
-    image_url_snapshot: string | null;
     product_id_snapshot: string;
   }> = [];
 
@@ -108,8 +111,7 @@ export async function POST(request: NextRequest) {
       size: ci.size,
       color: ci.color,
       unit_price_cents: unit,
-      design_snapshot: design.design_config ?? {},
-      image_url_snapshot: design.image_url ?? null,
+      // design_snapshot/image_url_snapshot populated by post-insert UPDATE.
       product_id_snapshot: design.product_id,
     });
   }
