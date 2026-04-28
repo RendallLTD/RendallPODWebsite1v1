@@ -49,9 +49,32 @@ export async function POST(request: NextRequest) {
     return new Response("malformed json", { status: 400 });
   }
 
+  if (!event.id) {
+    // No id = no idempotency key. Don't risk double-processing.
+    return new Response("missing event id", { status: 400 });
+  }
+
   const name = event.name ?? "";
   const intentId = event.data?.object?.id;
   const merchantOrderId = event.data?.object?.merchant_order_id;
+
+  const admin = createAdminClient();
+
+  // Idempotency: insert the event id; unique-violation = already seen.
+  const { error: logErr } = await admin
+    .from("airwallex_webhook_events")
+    .insert({ event_id: event.id, name });
+  if (logErr) {
+    if (logErr.code === "23505") {
+      return new Response("duplicate", { status: 200 });
+    }
+    // DB unavailable — let Airwallex retry rather than silently drop.
+    console.error("[airwallex webhook] event log insert failed", {
+      eventId: event.id,
+      logErr,
+    });
+    return new Response("event log unavailable", { status: 503 });
+  }
 
   // Event name strings follow Airwallex convention `payment_intent.succeeded`
   // etc. Double-check against the exact event catalog once sandbox webhooks
@@ -68,12 +91,26 @@ export async function POST(request: NextRequest) {
     }
     const result = await markOrderPaid(orderId);
     if (!result.ok) {
+      const transient = !result.status || result.status >= 500;
       console.error("[airwallex webhook] markOrderPaid failed", {
         eventId: event.id,
         orderId,
         reason: result.reason,
+        transient,
       });
+      if (transient) {
+        // Roll back the event row so the retry can re-attempt cleanly.
+        await admin.from("airwallex_webhook_events").delete().eq("event_id", event.id);
+        return new Response("transient failure", { status: 503 });
+      }
+      // Terminal failure (order missing/wrong status) — ack so Airwallex stops.
+      return new Response("terminal failure", { status: 200 });
     }
+    // Forensic link from event back to the order it paid.
+    await admin
+      .from("airwallex_webhook_events")
+      .update({ order_id: orderId })
+      .eq("event_id", event.id);
     return new Response("ok", { status: 200 });
   }
 
