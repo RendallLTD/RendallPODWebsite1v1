@@ -1,5 +1,6 @@
 import archiver from "archiver";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyFactoryItemSignature } from "@/lib/factory-files/sign";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,8 @@ type ItemRow = {
   color: string | null;
   print_url_front: string | null;
   mockup_url_front: string | null;
+  print_url_back: string | null;
+  mockup_url_back: string | null;
   designs: { product_id: string } | { product_id: string }[] | null;
   orders: {
     id: string;
@@ -27,7 +30,7 @@ type ItemRow = {
   } | null;
 };
 
-function bilingualOrderTxt(item: ItemRow): string {
+function bilingualOrderTxt(item: ItemRow, sidesIncluded: string[]): string {
   const ship = item.orders?.shipping_address ?? {};
   const design = Array.isArray(item.designs) ? item.designs[0] : item.designs;
   const productId = design?.product_id ?? "";
@@ -38,6 +41,7 @@ function bilingualOrderTxt(item: ItemRow): string {
     `数量 / Quantity: ${item.quantity}`,
     `颜色 / Color: ${item.color ?? ""}`,
     `尺码 / Size: ${item.size ?? ""}`,
+    `包含面 / Sides included: ${sidesIncluded.join(", ")}`,
     "",
     `收件人 / Recipient: ${ship.name ?? ""}`,
     `街道地址 / Street: ${ship.line1 ?? ""}`,
@@ -51,16 +55,27 @@ function bilingualOrderTxt(item: ItemRow): string {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ itemId: string }> },
 ) {
   const { itemId } = await params;
+
+  const url = new URL(request.url);
+  const verification = verifyFactoryItemSignature({
+    itemId,
+    exp: url.searchParams.get("exp"),
+    sig: url.searchParams.get("sig"),
+  });
+  if (!verification.ok) {
+    const status = verification.reason === "expired" ? 410 : 401;
+    return new Response(verification.reason, { status });
+  }
 
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("order_items")
     .select(
-      "id, quantity, size, color, print_url_front, mockup_url_front, designs:design_id(product_id), orders:order_id(id, shipping_address)",
+      "id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(product_id), orders:order_id(id, shipping_address)",
     )
     .eq("id", itemId)
     .single();
@@ -68,23 +83,30 @@ export async function GET(
   if (error || !data) {
     return new Response("not found", { status: 404 });
   }
-  const item = data as ItemRow;
+  const item = data as unknown as ItemRow;
 
-  if (!item.print_url_front || !item.mockup_url_front) {
+  const sides = [
+    { key: "front", printUrl: item.print_url_front, mockupUrl: item.mockup_url_front },
+    { key: "back", printUrl: item.print_url_back, mockupUrl: item.mockup_url_back },
+  ].filter(
+    (s): s is { key: string; printUrl: string; mockupUrl: string } =>
+      !!s.printUrl && !!s.mockupUrl,
+  );
+
+  if (sides.length === 0) {
     return new Response("render not ready", { status: 409 });
   }
 
-  const [printRes, mockupRes] = await Promise.all([
-    fetch(item.print_url_front),
-    fetch(item.mockup_url_front),
-  ]);
-  if (!printRes.ok || !mockupRes.ok) {
+  // Fetch every side's print + mockup in parallel.
+  const fetched = await Promise.all(
+    sides.flatMap((s) => [
+      fetch(s.printUrl).then(async (r) => ({ side: s.key, kind: "print" as const, ok: r.ok, buf: r.ok ? await r.arrayBuffer() : null })),
+      fetch(s.mockupUrl).then(async (r) => ({ side: s.key, kind: "mockup" as const, ok: r.ok, buf: r.ok ? await r.arrayBuffer() : null })),
+    ]),
+  );
+  if (fetched.some((f) => !f.ok || !f.buf)) {
     return new Response("asset fetch failed", { status: 502 });
   }
-  const [printBuf, mockupBuf] = await Promise.all([
-    printRes.arrayBuffer(),
-    mockupRes.arrayBuffer(),
-  ]);
 
   const orderShort = (item.orders?.id ?? "order").slice(0, 8);
   const filenameBase = `rendall_${orderShort}_${item.color ?? ""}_${item.size ?? ""}`
@@ -98,9 +120,15 @@ export async function GET(
       zip.on("end", () => controller.close());
       zip.on("error", (err) => controller.error(err));
 
-      zip.append(Buffer.from(printBuf), { name: `${filenameBase}_print.png` });
-      zip.append(Buffer.from(mockupBuf), { name: `${filenameBase}_mockup.png` });
-      zip.append(bilingualOrderTxt(item), { name: `${filenameBase}_order.txt` });
+      for (const f of fetched) {
+        zip.append(Buffer.from(f.buf as ArrayBuffer), {
+          name: `${filenameBase}_${f.kind}_${f.side}.png`,
+        });
+      }
+      zip.append(
+        bilingualOrderTxt(item, sides.map((s) => s.key)),
+        { name: `${filenameBase}_order.txt` },
+      );
       zip.finalize();
     },
   });

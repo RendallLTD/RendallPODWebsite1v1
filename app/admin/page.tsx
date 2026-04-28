@@ -11,14 +11,20 @@ type OrderRow = {
   total_cents: number;
   shipping_address: { city?: string; country?: string } | null;
   created_at: string;
-  order_items: { id: string; print_url_front: string | null; mockup_url_front: string | null }[];
+  order_items: {
+    id: string;
+    print_url_front: string | null;
+    mockup_url_front: string | null;
+    print_url_back: string | null;
+    mockup_url_back: string | null;
+  }[];
 };
 
 export default async function AdminPage() {
   const admin = createAdminClient();
   const { data: orders, error } = await admin
     .from("orders")
-    .select("id, user_id, status, total_cents, shipping_address, created_at, order_items(id, print_url_front, mockup_url_front)")
+    .select("id, user_id, status, total_cents, shipping_address, created_at, order_items(id, print_url_front, mockup_url_front, print_url_back, mockup_url_back)")
     .order("created_at", { ascending: false })
     .limit(200);
 

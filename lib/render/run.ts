@@ -9,9 +9,21 @@ export type RenderResult = {
   order_item_id: string;
   print_url_front?: string;
   mockup_url_front?: string;
+  print_url_back?: string;
+  mockup_url_back?: string;
 };
 
 export type SkipResult = { order_item_id: string; reason: string };
+
+// Sides we know how to persist as DB columns. Anything outside this
+// whitelist (e.g. a rogue "sleeve" key from a malformed design_config)
+// is skipped so we never attempt an UPDATE with an unknown column name.
+const SUPPORTED_SIDES = ["front", "back"] as const;
+type SupportedSide = (typeof SUPPORTED_SIDES)[number];
+
+function isSupportedSide(s: string): s is SupportedSide {
+  return (SUPPORTED_SIDES as readonly string[]).includes(s);
+}
 
 export async function renderOrderItems(
   itemIds: string[],
@@ -44,52 +56,82 @@ export async function renderOrderItems(
     }
     const config = cfg as DesignConfigV2;
 
-    const frontLayers = config.sides?.front;
-    if (!frontLayers || frontLayers.length === 0) {
-      skipped.push({ order_item_id: item.id, reason: "no front layers" });
-      continue;
-    }
-
     const product = getProductById(designRow.product_id);
-    const printSpec = product?.measurements?.printSpecs?.front;
-    if (!product || !printSpec) {
-      skipped.push({ order_item_id: item.id, reason: "product or printSpec missing" });
+    if (!product) {
+      skipped.push({ order_item_id: item.id, reason: "product missing" });
       continue;
     }
 
-    const photoPath = getDesignerPhoto(product, "front", item.color ?? product.colors[0]);
-    if (!photoPath) {
-      skipped.push({ order_item_id: item.id, reason: "photo missing" });
+    const perSideSkips: string[] = [];
+    const updatePayload: Record<string, string> = {};
+    const resultUrls: Partial<RenderResult> = {};
+
+    for (const [side, layers] of Object.entries(config.sides ?? {})) {
+      if (!layers || layers.length === 0) continue;
+
+      if (!isSupportedSide(side)) {
+        perSideSkips.push(`${side}: side not supported by schema`);
+        continue;
+      }
+
+      const printSpec = product.measurements?.printSpecs?.[side];
+      if (!printSpec) {
+        perSideSkips.push(`${side}: printSpec missing`);
+        continue;
+      }
+
+      const photoPath = getDesignerPhoto(product, side, item.color ?? product.colors[0]);
+      if (!photoPath) {
+        perSideSkips.push(`${side}: photo missing`);
+        continue;
+      }
+
+      try {
+        const printBuf = await renderPrintPng({ printSpec, layers });
+        const printKey = `prints/${item.order_id}/${item.id}/${side}.png`;
+        const printUrl = await uploadPng(printKey, printBuf);
+
+        const mockupBuf = await renderMockupPng({
+          productPhotoPath: photoPath,
+          printSpec,
+          layers,
+        });
+        const mockupKey = `mockups/${item.order_id}/${item.id}/${side}.png`;
+        const mockupUrl = await uploadPng(mockupKey, mockupBuf);
+
+        updatePayload[`print_url_${side}`] = printUrl;
+        updatePayload[`mockup_url_${side}`] = mockupUrl;
+        resultUrls[`print_url_${side}` as keyof RenderResult] = printUrl;
+        resultUrls[`mockup_url_${side}` as keyof RenderResult] = mockupUrl;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        perSideSkips.push(`${side}: render failed: ${msg}`);
+      }
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      const reason = perSideSkips.length > 0
+        ? `no renderable sides (${perSideSkips.join("; ")})`
+        : "no renderable sides";
+      skipped.push({ order_item_id: item.id, reason });
       continue;
     }
 
-    try {
-      const printBuf = await renderPrintPng({ printSpec, layers: frontLayers });
-      const printKey = `prints/${item.order_id}/${item.id}/front.png`;
-      const printUrl = await uploadPng(printKey, printBuf);
+    const { error: updateErr } = await admin
+      .from("order_items")
+      .update(updatePayload)
+      .eq("id", item.id);
+    if (updateErr) {
+      skipped.push({ order_item_id: item.id, reason: `update failed: ${updateErr.message}` });
+      continue;
+    }
 
-      const mockupBuf = await renderMockupPng({
-        productPhotoPath: photoPath,
-        printSpec,
-        layers: frontLayers,
-      });
-      const mockupKey = `mockups/${item.order_id}/${item.id}/front.png`;
-      const mockupUrl = await uploadPng(mockupKey, mockupBuf);
+    rendered.push({ order_item_id: item.id, ...resultUrls });
 
-      const { error: updateErr } = await admin
-        .from("order_items")
-        .update({ print_url_front: printUrl, mockup_url_front: mockupUrl })
-        .eq("id", item.id);
-      if (updateErr) throw updateErr;
-
-      rendered.push({
-        order_item_id: item.id,
-        print_url_front: printUrl,
-        mockup_url_front: mockupUrl,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      skipped.push({ order_item_id: item.id, reason: `render failed: ${msg}` });
+    // Also record per-side render failures on items that partially rendered,
+    // so the admin can see which side needs retrying.
+    for (const sideReason of perSideSkips) {
+      skipped.push({ order_item_id: item.id, reason: sideReason });
     }
   }
 

@@ -15,6 +15,8 @@ type OrderItem = {
   unit_price_cents: number;
   print_url_front: string | null;
   mockup_url_front: string | null;
+  print_url_back: string | null;
+  mockup_url_back: string | null;
   designs: { image_url: string | null; product_id: string } | { image_url: string | null; product_id: string }[] | null;
 };
 
@@ -38,7 +40,7 @@ export default async function AdminOrderDetailPage({
   const admin = createAdminClient();
   const { data: order, error } = await admin
     .from("orders")
-    .select("id, user_id, status, total_cents, shipping_address, cart_item_ids, created_at, order_items(id, design_id, product_name, quantity, size, color, unit_price_cents, print_url_front, mockup_url_front, designs:design_id(image_url, product_id))")
+    .select("id, user_id, status, total_cents, shipping_address, cart_item_ids, created_at, order_items(id, design_id, product_name, quantity, size, color, unit_price_cents, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(image_url, product_id))")
     .eq("id", id)
     .single();
 
@@ -84,8 +86,12 @@ export default async function AdminOrderDetailPage({
                     Qty {item.quantity} · {item.size ?? "—"} · {item.color ?? "—"} · ${(item.unit_price_cents / 100).toFixed(2)} each
                   </div>
                   <div style={{ fontSize: 13, marginTop: 8 }}>
+                    <div style={{ fontWeight: 500, marginBottom: 2 }}>Front</div>
                     <div>Print: {item.print_url_front ? <a href={item.print_url_front} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
                     <div>Mockup: {item.mockup_url_front ? <a href={item.mockup_url_front} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
+                    <div style={{ fontWeight: 500, marginTop: 6, marginBottom: 2 }}>Back</div>
+                    <div>Print: {item.print_url_back ? <a href={item.print_url_back} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
+                    <div>Mockup: {item.mockup_url_back ? <a href={item.mockup_url_back} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
                   </div>
                   <div style={{ marginTop: 12 }}>
                     <OrderItemActions itemId={item.id} />

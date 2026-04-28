@@ -11,7 +11,13 @@ type OrderRow = {
   total_cents: number;
   shipping_address: { city?: string; country?: string } | null;
   created_at: string;
-  order_items: { id: string; print_url_front: string | null; mockup_url_front: string | null }[];
+  order_items: {
+    id: string;
+    print_url_front: string | null;
+    mockup_url_front: string | null;
+    print_url_back: string | null;
+    mockup_url_back: string | null;
+  }[];
 };
 
 export default function AdminOrdersTable({ orders }: { orders: OrderRow[] }) {
@@ -139,7 +145,10 @@ export default function AdminOrdersTable({ orders }: { orders: OrderRow[] }) {
           )}
           {orders.map((o) => {
             const total = o.order_items.length;
-            const rendered = o.order_items.filter((i) => i.print_url_front && i.mockup_url_front).length;
+            const rendered = o.order_items.filter((i) =>
+              (i.print_url_front && i.mockup_url_front) ||
+              (i.print_url_back && i.mockup_url_back)
+            ).length;
             const dest = [o.shipping_address?.city, o.shipping_address?.country].filter(Boolean).join(", ") || "—";
             return (
               <tr key={o.id} style={{ borderBottom: "1px solid var(--border, #eee)" }}>
