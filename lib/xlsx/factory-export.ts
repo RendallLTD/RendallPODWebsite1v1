@@ -58,10 +58,8 @@ type OrderItem = {
   mockup_url_front: string | null;
   print_url_back: string | null;
   mockup_url_back: string | null;
-  designs:
-    | { product_id: string; design_config: unknown }
-    | { product_id: string; design_config: unknown }[]
-    | null;
+  product_id_snapshot: string;
+  design_snapshot: unknown;
 };
 
 type OrderWithItems = {
@@ -87,7 +85,7 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
   const { data, error } = await admin
     .from("orders")
     .select(
-      "id, shipping_address, order_items(id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(product_id, design_config))",
+      "id, shipping_address, order_items(id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, product_id_snapshot, design_snapshot)",
     )
     .in("id", orderIds);
 
@@ -103,12 +101,11 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
   for (const order of orders) {
     const ship = order.shipping_address ?? {};
     for (const item of order.order_items) {
-      const design = Array.isArray(item.designs) ? item.designs[0] : item.designs;
-      const productId = design?.product_id ?? "";
-      // design_config.size overrides the cart-side size for v2 schemas, but
+      const productId = item.product_id_snapshot;
+      // design_snapshot.size overrides the cart-side size for v2 schemas, but
       // order_items.size is authoritative for the SKU (it was locked in at
       // checkout and is what the factory should ship).
-      const cfg = design?.design_config as unknown;
+      const cfg = item.design_snapshot as unknown;
       if (cfg && !isV2(cfg)) {
         // still proceed — we don't need mm layers for XLSX, only URLs
       }

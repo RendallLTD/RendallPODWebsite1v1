@@ -32,7 +32,7 @@ export async function renderOrderItems(
 
   const { data: items, error } = await admin
     .from("order_items")
-    .select("id, order_id, design_id, color, designs:design_id(product_id, design_config)")
+    .select("id, order_id, color, design_snapshot, product_id_snapshot")
     .in("id", itemIds);
 
   if (error || !items) {
@@ -43,20 +43,14 @@ export async function renderOrderItems(
   const skipped: SkipResult[] = [];
 
   for (const item of items) {
-    const designRow = Array.isArray(item.designs) ? item.designs[0] : item.designs;
-    if (!designRow) {
-      skipped.push({ order_item_id: item.id, reason: "design missing" });
-      continue;
-    }
-
-    const cfg = designRow.design_config as unknown;
+    const cfg = item.design_snapshot as unknown;
     if (!isV2(cfg)) {
-      skipped.push({ order_item_id: item.id, reason: "design_config not v2" });
+      skipped.push({ order_item_id: item.id, reason: "design_snapshot not v2" });
       continue;
     }
     const config = cfg as DesignConfigV2;
 
-    const product = getProductById(designRow.product_id);
+    const product = getProductById(item.product_id_snapshot);
     if (!product) {
       skipped.push({ order_item_id: item.id, reason: "product missing" });
       continue;

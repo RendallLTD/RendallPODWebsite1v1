@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const { data: cartItems, error: cartErr } = await supabase
     .from("cart_items")
-    .select("id, design_id, quantity, size, color, design:designs(product_id, name)")
+    .select("id, design_id, quantity, size, color, design:designs(product_id, name, design_config, image_url)")
     .eq("user_id", user.id);
 
   if (cartErr) {
@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
     size: string;
     color: string;
     unit_price_cents: number;
+    design_snapshot: unknown;
+    image_url_snapshot: string | null;
+    product_id_snapshot: string;
   }> = [];
 
   for (const ci of cartItems) {
@@ -105,6 +108,9 @@ export async function POST(request: NextRequest) {
       size: ci.size,
       color: ci.color,
       unit_price_cents: unit,
+      design_snapshot: design.design_config ?? {},
+      image_url_snapshot: design.image_url ?? null,
+      product_id_snapshot: design.product_id,
     });
   }
 

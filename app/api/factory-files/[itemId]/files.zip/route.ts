@@ -23,7 +23,7 @@ type ItemRow = {
   mockup_url_front: string | null;
   print_url_back: string | null;
   mockup_url_back: string | null;
-  designs: { product_id: string } | { product_id: string }[] | null;
+  product_id_snapshot: string;
   orders: {
     id: string;
     shipping_address: ShippingAddress | null;
@@ -32,8 +32,7 @@ type ItemRow = {
 
 function bilingualOrderTxt(item: ItemRow, sidesIncluded: string[]): string {
   const ship = item.orders?.shipping_address ?? {};
-  const design = Array.isArray(item.designs) ? item.designs[0] : item.designs;
-  const productId = design?.product_id ?? "";
+  const productId = item.product_id_snapshot;
   const lines = [
     `订单号 / Order ID: ${item.orders?.id ?? ""}`,
     `订单项 / Item ID: ${item.id}`,
@@ -75,7 +74,7 @@ export async function GET(
   const { data, error } = await admin
     .from("order_items")
     .select(
-      "id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(product_id), orders:order_id(id, shipping_address)",
+      "id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, product_id_snapshot, orders:order_id(id, shipping_address)",
     )
     .eq("id", itemId)
     .single();
