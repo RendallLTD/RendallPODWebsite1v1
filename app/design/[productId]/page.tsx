@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getProductById, getDesignerPhoto, hasSidePhoto, type Product } from "@/lib/products";
 import { createClient } from "@/lib/supabase/client";
 import ImageUploader from "@/components/design/ImageUploader";
 import DesignCanvas from "@/components/design/DesignCanvas";
 import type { DesignLayer, LayerNaturalSize } from "@/components/design/DesignCanvas";
 import DesignControls from "@/components/design/DesignControls";
-import { aspectFitSize, pxToMm, type DesignConfigV2, type MmLayer } from "@/lib/design-schema";
+import { aspectFitSize, pxToMm, isV2, type DesignConfigV2, type MmLayer } from "@/lib/design-schema";
+import { hydrateFromDesignConfig } from "@/lib/design/hydrate";
 import { use } from "react";
 
 type SideState = {
@@ -91,6 +92,14 @@ export default function DesignPage({
   const { productId } = use(params);
   const product = getProductById(productId);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const designIdParam = searchParams.get("designId");
+
+  // Edit mode: when a designId is in the URL, hydrate the saved row into
+  // canvas state. Save then UPDATEs that row instead of inserting a copy.
+  const [editingDesignId, setEditingDesignId] = useState<string | null>(null);
+  const [hydrating, setHydrating] = useState<boolean>(!!designIdParam);
+  const hydratedFor = useRef<string | null>(null);
 
   const [activeSide, setActiveSide] = useState(product?.printAreas[0] ?? "front");
   const [sides, setSides] = useState<Record<string, SideState>>(() => {
@@ -115,8 +124,12 @@ export default function DesignPage({
   const printAreaRef = useRef<HTMLDivElement | null>(null);
   const [naturalByLayer, setNaturalByLayer] = useState<Record<string, LayerNaturalSize>>({});
 
+  // Tracked via state so hydration effect can wait for the print-area DOM
+  // node before sampling clientWidth/clientHeight.
+  const [printAreaEl, setPrintAreaEl] = useState<HTMLDivElement | null>(null);
   const handlePrintAreaRef = useCallback((el: HTMLDivElement | null) => {
     printAreaRef.current = el;
+    setPrintAreaEl(el);
   }, []);
 
   const handleLayerNaturalSize = useCallback(
@@ -133,6 +146,94 @@ export default function DesignPage({
       setActiveSide(product.printAreas[0] ?? "front");
     }
   }, [product, activeSide, selectedColor]);
+
+  // Edit mode: hydrate saved design into canvas state. Runs once per
+  // designId once the print-area DOM node is mounted (so we have its
+  // pixel size for the mm→px inversion).
+  useEffect(() => {
+    if (!designIdParam) return;
+    if (!product) return;
+    if (!printAreaEl) return;
+    if (hydratedFor.current === designIdParam) return;
+    hydratedFor.current = designIdParam;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("designs")
+          .select("id, product_id, design_config")
+          .eq("id", designIdParam)
+          .maybeSingle();
+        if (cancelled) return;
+
+        if (error || !data) {
+          console.error("[design] hydrate: design not found", { designIdParam, error });
+          alert("Couldn't load saved design — starting fresh.");
+          setHydrating(false);
+          return;
+        }
+
+        // Stale URL: designId is for a different product. Silently bounce
+        // to the correct product page; preserve the designId.
+        if (data.product_id !== product.id) {
+          router.replace(`/design/${data.product_id}?designId=${designIdParam}`);
+          return;
+        }
+
+        if (!isV2(data.design_config)) {
+          console.error("[design] hydrate: design_config not v2", { designIdParam });
+          alert("Couldn't load saved design — starting fresh.");
+          setHydrating(false);
+          return;
+        }
+
+        const paW = printAreaEl.clientWidth;
+        const paH = printAreaEl.clientHeight;
+        if (paW === 0 || paH === 0) {
+          console.error("[design] hydrate: print area not measured");
+          setHydrating(false);
+          return;
+        }
+
+        const hydrated = await hydrateFromDesignConfig({
+          config: data.design_config as DesignConfigV2,
+          product,
+          printAreaPx: { w: paW, h: paH },
+          nextLayerId,
+        });
+        if (cancelled) return;
+
+        const newSides: Record<string, SideState> = {};
+        for (const side of product.printAreas) {
+          const layers = hydrated.sides[side] ?? [];
+          newSides[side] = {
+            layers,
+            activeLayerId: layers[layers.length - 1]?.id ?? null,
+          };
+        }
+        setSides(newSides);
+        setNaturalByLayer(hydrated.naturalByLayer);
+        setSelectedSize(hydrated.size);
+        setSelectedColor(hydrated.color);
+        // Activate the first side that actually has layers.
+        const sideWithLayers = product.printAreas.find((s) => (hydrated.sides[s]?.length ?? 0) > 0);
+        if (sideWithLayers) setActiveSide(sideWithLayers);
+        setEditingDesignId(designIdParam);
+        setHydrating(false);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[design] hydrate failed", err);
+        alert("Couldn't load saved design — starting fresh.");
+        setHydrating(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [designIdParam, product, printAreaEl, router]);
 
   const current = sides[activeSide] ?? emptySide();
   const activeLayer = current.layers.find((l) => l.id === current.activeLayerId) ?? null;
@@ -332,6 +433,24 @@ export default function DesignPage({
       return;
     }
 
+    if (editingDesignId) {
+      const { error } = await supabase
+        .from("designs")
+        .update({
+          name: `${product.name} Design`,
+          image_url: payload.primaryImage,
+          design_config: payload.designConfig,
+        })
+        .eq("id", editingDesignId);
+      setSaving(false);
+      if (error) {
+        alert("Failed to update design.");
+        return;
+      }
+      alert("Design updated!");
+      return;
+    }
+
     const { error } = await supabase.from("designs").insert({
       user_id: user.id,
       product_id: product.id,
@@ -345,7 +464,7 @@ export default function DesignPage({
       return;
     }
     alert("Design saved!");
-  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router, getPrintAreaPx, naturalByLayer]);
+  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router, getPrintAreaPx, naturalByLayer, editingDesignId]);
 
   const handleAddToCart = useCallback(async () => {
     if (addToCartInFlight.current) return;
@@ -376,34 +495,56 @@ export default function DesignPage({
         return;
       }
 
-      const { data: design, error: designErr } = await supabase
-        .from("designs")
-        .insert({
-          user_id: user.id,
-          product_id: product.id,
-          name: `${product.name} Design`,
-          image_url: payload.primaryImage,
-          design_config: payload.designConfig,
-        })
-        .select("id")
-        .single();
+      let designId: string;
+      if (editingDesignId) {
+        const { error: updateErr } = await supabase
+          .from("designs")
+          .update({
+            name: `${product.name} Design`,
+            image_url: payload.primaryImage,
+            design_config: payload.designConfig,
+          })
+          .eq("id", editingDesignId);
+        if (updateErr) {
+          alert("Failed to update design.");
+          return;
+        }
+        designId = editingDesignId;
+      } else {
+        const { data: design, error: designErr } = await supabase
+          .from("designs")
+          .insert({
+            user_id: user.id,
+            product_id: product.id,
+            name: `${product.name} Design`,
+            image_url: payload.primaryImage,
+            design_config: payload.designConfig,
+          })
+          .select("id")
+          .single();
 
-      if (designErr || !design) {
-        alert("Failed to save design.");
-        return;
+        if (designErr || !design) {
+          alert("Failed to save design.");
+          return;
+        }
+        designId = design.id;
       }
 
       const { error: cartErr } = await supabase.from("cart_items").insert({
         user_id: user.id,
-        design_id: design.id,
+        design_id: designId,
         quantity: 1,
         size: selectedSize,
         color: selectedColor,
       });
 
       if (cartErr) {
-        // Roll back the orphan design so retries don't accumulate garbage.
-        await supabase.from("designs").delete().eq("id", design.id);
+        // For new designs only, roll back the orphan so retries don't
+        // accumulate garbage. In edit mode the design legitimately exists
+        // and updates have already been applied — leave it alone.
+        if (!editingDesignId) {
+          await supabase.from("designs").delete().eq("id", designId);
+        }
         alert("Failed to add to cart. Please try again.");
         return;
       }
@@ -413,7 +554,7 @@ export default function DesignPage({
       setSaving(false);
       addToCartInFlight.current = false;
     }
-  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router, getPrintAreaPx, naturalByLayer]);
+  }, [hasAnyDesign, product, sides, selectedSize, selectedColor, router, getPrintAreaPx, naturalByLayer, editingDesignId]);
 
   if (!product) {
     return (
@@ -445,6 +586,29 @@ export default function DesignPage({
     <section className="design-page">
       <div className="container">
         <h1 className="design-page__title">Design: {product.name}</h1>
+        {hydrating && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              fontSize: 16,
+              fontWeight: 600,
+              color: "var(--dark)",
+            }}
+          >
+            Loading saved design…
+          </div>
+        )}
         <div className="design-page__layout">
           <div className="design-page__left">
             <DesignCanvas
@@ -506,6 +670,7 @@ export default function DesignPage({
               onAddToCart={handleAddToCart}
               hasDesign={hasAnyDesign}
               saving={saving}
+              isEditing={!!editingDesignId}
             />
           </div>
         </div>

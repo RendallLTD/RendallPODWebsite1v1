@@ -29,6 +29,7 @@ type Props = {
   onAddToCart: () => void;
   hasDesign: boolean;
   saving: boolean;
+  isEditing?: boolean;
 };
 
 export default function DesignControls({
@@ -53,6 +54,7 @@ export default function DesignControls({
   onAddToCart,
   hasDesign,
   saving,
+  isEditing = false,
 }: Props) {
   const hasActiveLayer = activeLayerId !== null;
 
@@ -219,7 +221,7 @@ export default function DesignControls({
         disabled={!hasDesign || saving}
         style={{ width: "100%", marginBottom: 12 }}
       >
-        {saving ? "Saving..." : "Save design"}
+        {saving ? "Saving..." : isEditing ? "Update design" : "Save design"}
       </button>
 
       <button
