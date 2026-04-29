@@ -33,6 +33,15 @@ const integrations = ["Shopify", "Etsy", "WooCommerce", "Amazon", "eBay", "TikTo
 export default function Home() {
   return (
     <>
+      {/* TOP BANNER */}
+      <section style={{ background: "#fff", padding: "56px 16px 24px", textAlign: "center" }}>
+        <div className="container">
+          <h1 className="font-dot" style={{ fontSize: "clamp(56px, 11vw, 160px)", fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.02em", margin: 0, color: "var(--dark)" }}>
+            IDEA -&gt; INCOME
+          </h1>
+        </div>
+      </section>
+
       {/* HERO */}
       <section className="hero">
         <div className="container">
@@ -266,6 +275,15 @@ export default function Home() {
       </section>
 
       <hr style={{ border: "none", borderTop: "2px dotted rgba(255,255,255,0.4)", margin: 0, position: "relative" }} />
+
+      {/* BOTTOM PROVOCATION */}
+      <section style={{ background: "transparent", position: "relative", padding: "80px 16px 40px", textAlign: "center" }}>
+        <div className="container" style={{ maxWidth: 1200 }}>
+          <h2 style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "clamp(28px, 4.5vw, 56px)", fontWeight: 400, lineHeight: 1.15, textTransform: "uppercase", color: "#fff", margin: 0 }}>
+            HOW MANY T SHIRTS DO YOU NEED TO SELL TO MAKE 1M DOLLARS?
+          </h2>
+        </div>
+      </section>
 
       {/* FINAL CTA */}
       <section className="cta-section" style={{ background: "transparent", position: "relative" }}>
