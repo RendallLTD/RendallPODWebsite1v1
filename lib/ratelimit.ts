@@ -27,11 +27,14 @@ export const limiters = {
   checkout: makeLimiter(5, "1 m"),
   // 10 auth page hits / minute / IP — slows scripts that scrape login pages
   auth: makeLimiter(10, "1 m"),
-  // 5 login attempts / minute / IP — humans don't typo their password 5x/min;
-  // bots brute-forcing credentials get throttled hard
-  loginAttempt: makeLimiter(5, "1 m"),
-  // 3 signups / hour / IP — signups are rare; this caps account-creation spam
-  signupAttempt: makeLimiter(3, "1 h"),
+  // 15 login attempts / minute / IP — high enough to absorb shared-IP cases
+  // (coffee shops, mobile carrier CGNAT, office NAT) where multiple legit
+  // users may attempt within seconds of each other; still throttles bots
+  // doing per-IP brute force
+  loginAttempt: makeLimiter(15, "1 m"),
+  // 10 signups / hour / IP — caps account-creation spam without locking
+  // out shared-IP households / friend groups signing up together
+  signupAttempt: makeLimiter(10, "1 h"),
   // 60 API calls / minute / IP — generic catch-all for /api/*
   api: makeLimiter(60, "1 m"),
   // 30 upload presign requests / minute / user — caps flood-the-bucket abuse;
