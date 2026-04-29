@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProductById } from "@/lib/products";
 import { isValidCountryCode } from "@/lib/countries";
+import { enforce, getClientIp, limiters } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -51,6 +52,9 @@ function validateShipping(input: unknown): { ok: true; value: ShippingInput } | 
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await enforce(limiters.checkout, `orders-create:${getClientIp(request)}`);
+  if (limited) return limited;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
