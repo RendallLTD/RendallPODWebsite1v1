@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import type { PrintAreaSpec } from "@/lib/products";
 import type { MmLayer } from "@/lib/design-schema";
+import { fetchImageBuffer } from "./fetch-image";
 
 export type RenderPrintParams = {
   printSpec: PrintAreaSpec;
@@ -13,16 +14,6 @@ const MM_PER_INCH = 25.4;
 
 function mmToPx(mm: number, dpi: number): number {
   return Math.round((mm * dpi) / MM_PER_INCH);
-}
-
-/**
- * Decode a data URL or raw base64 string into a Buffer.
- * MmLayer.image is typically "data:image/png;base64,..." from the uploader.
- */
-function decodeImage(source: string): Buffer {
-  const comma = source.indexOf(",");
-  const b64 = comma >= 0 ? source.slice(comma + 1) : source;
-  return Buffer.from(b64, "base64");
 }
 
 /**
@@ -42,7 +33,7 @@ export async function renderPrintPng(params: RenderPrintParams): Promise<Buffer>
     const layerH = mmToPx(layer.heightMm, dpi);
     if (layerW <= 0 || layerH <= 0) continue;
 
-    const resized = await sharp(decodeImage(layer.image))
+    const resized = await sharp(await fetchImageBuffer(layer.image))
       .resize(layerW, layerH, { fit: "fill" })
       .png()
       .toBuffer();

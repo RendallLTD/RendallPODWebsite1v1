@@ -34,6 +34,9 @@ export const limiters = {
   signupAttempt: makeLimiter(3, "1 h"),
   // 60 API calls / minute / IP — generic catch-all for /api/*
   api: makeLimiter(60, "1 m"),
+  // 30 upload presign requests / minute / user — caps flood-the-bucket abuse;
+  // a normal design has 1–3 layers so 30/min is well above human use.
+  uploadPresign: makeLimiter(30, "1 m"),
 };
 
 // Best-effort client IP from common proxy headers. Falls back to a constant

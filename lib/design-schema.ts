@@ -7,7 +7,11 @@
 // current PrintAreaSpec.
 
 export type MmLayer = {
-  /** Base64 data URL of the uploaded image (same format as designs.image_url today). */
+  /**
+   * HTTPS URL of the uploaded image (R2). Legacy designs may store a
+   * base64 data URL ("data:image/png;base64,..."); renderers handle both
+   * via lib/render/fetch-image.ts.
+   */
   image: string;
   /** Horizontal offset from print-area center to layer center, in mm. */
   xMm: number;

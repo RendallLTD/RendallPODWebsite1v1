@@ -3,6 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import type { PrintAreaSpec } from "@/lib/products";
 import type { MmLayer } from "@/lib/design-schema";
+import { fetchImageBuffer } from "./fetch-image";
 
 export type RenderMockupParams = {
   /** Path from getDesignerPhoto (e.g. "/products/...png"); resolved under /public. */
@@ -50,7 +51,7 @@ export async function renderMockupPng(params: RenderMockupParams): Promise<Buffe
     const layerPxH = Math.round(layer.heightMm * pxPerMmH);
     if (layerPxW <= 0 || layerPxH <= 0) continue;
 
-    const resized = await sharp(decodeImage(layer.image))
+    const resized = await sharp(await fetchImageBuffer(layer.image))
       .resize(layerPxW, layerPxH, { fit: "fill" })
       .png()
       .toBuffer();
@@ -68,8 +69,3 @@ export async function renderMockupPng(params: RenderMockupParams): Promise<Buffe
   return out.png().toBuffer();
 }
 
-function decodeImage(source: string): Buffer {
-  const comma = source.indexOf(",");
-  const b64 = comma >= 0 ? source.slice(comma + 1) : source;
-  return Buffer.from(b64, "base64");
-}
