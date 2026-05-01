@@ -23,6 +23,7 @@ type OrderItem = {
   mockup_url_front: string | null;
   print_url_back: string | null;
   mockup_url_back: string | null;
+  recipient_address: Record<string, string> | null;
   designs: { image_url: string | null; product_id: string } | { image_url: string | null; product_id: string }[] | null;
   render_jobs: RenderJob | RenderJob[] | null;
 };
@@ -47,7 +48,7 @@ export default async function AdminOrderDetailPage({
   const admin = createAdminClient();
   const { data: order, error } = await admin
     .from("orders")
-    .select("id, user_id, status, total_cents, shipping_address, cart_item_ids, created_at, order_items(id, design_id, product_name, quantity, size, color, unit_price_cents, print_url_front, mockup_url_front, print_url_back, mockup_url_back, designs:design_id(image_url, product_id), render_jobs(status, attempts, last_error))")
+    .select("id, user_id, status, total_cents, shipping_address, cart_item_ids, created_at, order_items(id, design_id, product_name, quantity, size, color, unit_price_cents, print_url_front, mockup_url_front, print_url_back, mockup_url_back, recipient_address, designs:design_id(image_url, product_id), render_jobs(status, attempts, last_error))")
     .eq("id", id)
     .single();
 
@@ -66,12 +67,15 @@ export default async function AdminOrderDetailPage({
       </div>
 
       <section style={{ marginBottom: 32 }}>
-        <h3>Shipping</h3>
+        <h3>Shipping (primary contact)</h3>
         {o.shipping_address ? (
           <pre style={{ background: "var(--muted, #f5f5f5)", padding: 12, fontSize: 13, overflow: "auto" }}>
             {JSON.stringify(o.shipping_address, null, 2)}
           </pre>
         ) : <p style={{ opacity: 0.6 }}>No shipping address</p>}
+        <p style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>
+          Per-recipient addresses are listed on each item below.
+        </p>
       </section>
 
       <section>
@@ -93,6 +97,15 @@ export default async function AdminOrderDetailPage({
                   <div style={{ fontSize: 13, opacity: 0.7 }}>
                     Qty {item.quantity} · {item.size ?? "—"} · {item.color ?? "—"} · ${(item.unit_price_cents / 100).toFixed(2)} each
                   </div>
+                  {item.recipient_address && (
+                    <div style={{ fontSize: 12, marginTop: 6, padding: 8, background: "var(--muted, #fafafa)", borderRadius: 4 }}>
+                      <div style={{ fontWeight: 500, marginBottom: 2 }}>Ship to</div>
+                      <div>{item.recipient_address.name}</div>
+                      <div>{item.recipient_address.line1}</div>
+                      <div>{item.recipient_address.city}, {item.recipient_address.state} {item.recipient_address.postal}</div>
+                      <div>{item.recipient_address.country} · {item.recipient_address.phone}</div>
+                    </div>
+                  )}
                   {job && (
                     <div style={{ fontSize: 12, marginTop: 6 }}>
                       Render: <strong style={{ color: job.status === "failed" ? "#c0392b" : job.status === "done" ? "#27ae60" : undefined }}>{job.status}</strong>

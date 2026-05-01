@@ -60,6 +60,7 @@ type OrderItem = {
   mockup_url_back: string | null;
   product_id_snapshot: string;
   design_snapshot: unknown;
+  recipient_address: ShippingAddress | null;
 };
 
 type OrderWithItems = {
@@ -85,7 +86,7 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
   const { data, error } = await admin
     .from("orders")
     .select(
-      "id, shipping_address, order_items(id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, product_id_snapshot, design_snapshot)",
+      "id, shipping_address, order_items(id, quantity, size, color, print_url_front, mockup_url_front, print_url_back, mockup_url_back, product_id_snapshot, design_snapshot, recipient_address)",
     )
     .in("id", orderIds);
 
@@ -99,8 +100,11 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
   ws.addRow(HEADERS);
 
   for (const order of orders) {
-    const ship = order.shipping_address ?? {};
+    const orderShip = order.shipping_address ?? {};
     for (const item of order.order_items) {
+      // Per-item recipient (bulk orders) takes precedence; fall back to the
+      // order-level shipping_address for legacy single-recipient orders.
+      const ship = item.recipient_address ?? orderShip;
       const productId = item.product_id_snapshot;
       // design_snapshot.size overrides the cart-side size for v2 schemas, but
       // order_items.size is authoritative for the SKU (it was locked in at

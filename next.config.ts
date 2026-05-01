@@ -10,7 +10,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://*.airwallex.com",
   "img-src 'self' data: blob: https://*.supabase.co https://*.airwallex.com https://*.r2.dev https://*.r2.cloudflarestorage.com",
   "font-src 'self' data: https://*.airwallex.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.airwallex.com https://*.r2.dev https://*.r2.cloudflarestorage.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.airwallex.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://places.googleapis.com",
   "frame-src https://*.airwallex.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
