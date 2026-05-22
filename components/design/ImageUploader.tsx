@@ -1,9 +1,16 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
 
 type Props = {
   onImageUpload: (url: string) => void;
+  /** When true, the visible drop zone is hidden — uploads happen only via the imperative
+   *  handle (openPicker()), useful in bulk mode where the right panel drives uploads. */
+  hidden?: boolean;
+};
+
+export type ImageUploaderHandle = {
+  openPicker: () => void;
 };
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -50,11 +57,27 @@ async function putToR2(uploadUrl: string, file: File, contentType: string): Prom
 
 type UploadPhase = "idle" | "signing" | "uploading" | "done";
 
-export default function ImageUploader({ onImageUpload }: Props) {
+const ImageUploader = forwardRef<ImageUploaderHandle, Props>(function ImageUploader(
+  { onImageUpload, hidden = false }: Props,
+  ref
+) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [phase, setPhase] = useState<UploadPhase>("idle");
+  const [showRightsModal, setShowRightsModal] = useState(false);
+  const pendingDropRef = useRef<File | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    openPicker: () => {
+      if (phase === "signing" || phase === "uploading") return;
+      if (!rightsConfirmed) {
+        setShowRightsModal(true);
+        return;
+      }
+      inputRef.current?.click();
+    },
+  }), [phase, rightsConfirmed]);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -101,41 +124,35 @@ export default function ImageUploader({ onImageUpload }: Props) {
     (e: React.DragEvent) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
-      if (file) void handleFile(file);
+      if (!file) return;
+      if (!rightsConfirmed) {
+        pendingDropRef.current = file;
+        setShowRightsModal(true);
+        return;
+      }
+      void handleFile(file);
     },
-    [handleFile]
+    [handleFile, rightsConfirmed]
   );
+
+  const acceptRights = useCallback(() => {
+    setRightsConfirmed(true);
+    setShowRightsModal(false);
+    const pending = pendingDropRef.current;
+    pendingDropRef.current = null;
+    if (pending) {
+      void handleFile(pending);
+    } else {
+      // No pending drop — open file picker
+      inputRef.current?.click();
+    }
+  }, [handleFile]);
 
   const busy = phase === "signing" || phase === "uploading";
   const busyLabel = phase === "signing" ? "Preparing upload…" : phase === "uploading" ? "Uploading…" : null;
 
   return (
     <div>
-      <label
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 10,
-          padding: "12px 14px",
-          marginBottom: 12,
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          background: rightsConfirmed ? "rgba(0,128,0,0.04)" : "rgba(255,165,0,0.06)",
-          cursor: "pointer",
-          fontSize: 13,
-          lineHeight: 1.5,
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={rightsConfirmed}
-          onChange={(e) => setRightsConfirmed(e.target.checked)}
-          style={{ marginTop: 3, flexShrink: 0 }}
-        />
-        <span>
-          I confirm that I own this image, or I have explicit permission from the rights holder to reproduce and sell it. I understand that uploading content that infringes copyright, trademarks, or other intellectual property rights may result in order cancellation and account termination, and that Rendall&apos;s <a href="/dmca" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ textDecoration: "underline" }}>takedown procedure</a> applies.
-        </span>
-      </label>
       <div
         className="uploader"
         onDrop={handleDrop}
@@ -143,13 +160,16 @@ export default function ImageUploader({ onImageUpload }: Props) {
         onClick={() => {
           if (busy) return;
           if (!rightsConfirmed) {
-            setError("Please confirm you have rights to use this image before uploading.");
+            setShowRightsModal(true);
             return;
           }
           inputRef.current?.click();
         }}
-        style={{ opacity: rightsConfirmed && !busy ? 1 : 0.55, cursor: rightsConfirmed && !busy ? "pointer" : "not-allowed" }}
-        aria-disabled={!rightsConfirmed || busy}
+        style={{
+          display: hidden ? "none" : undefined,
+          opacity: busy ? 0.55 : 1,
+          cursor: busy ? "not-allowed" : "pointer",
+        }}
         aria-busy={busy}
       >
         <input
@@ -170,6 +190,69 @@ export default function ImageUploader({ onImageUpload }: Props) {
         <p className="uploader__sub">or click to browse (PNG or JPEG — max 50MB)</p>
         {error && <p className="uploader__error" style={{ color: "#c00", marginTop: 8 }}>{error}</p>}
       </div>
+
+      {showRightsModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="rights-modal-title"
+          onClick={() => setShowRightsModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              maxWidth: 520,
+              width: "100%",
+              padding: 28,
+              borderRadius: 8,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            }}
+          >
+            <h2 id="rights-modal-title" style={{ margin: 0, marginBottom: 16, fontSize: 20, fontWeight: 700 }}>
+              Confirm image rights
+            </h2>
+            <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 24, color: "#1a1a1a" }}>
+              I confirm that I own this image, or I have explicit permission from the rights holder to reproduce and sell it. I understand that uploading content that infringes copyright, trademarks, or other intellectual property rights may result in order cancellation and account termination, and that Rendall&apos;s{" "}
+              <a href="/dmca" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>
+                takedown procedure
+              </a>{" "}
+              applies.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button
+                className="btn btn--outline"
+                onClick={() => {
+                  pendingDropRef.current = null;
+                  setShowRightsModal(false);
+                }}
+                style={{ padding: "10px 20px" }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn--primary"
+                onClick={acceptRights}
+                style={{ padding: "10px 20px" }}
+              >
+                I agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+});
+
+export default ImageUploader;

@@ -1,6 +1,7 @@
 "use client";
 
-import { hasSidePhoto, type Product } from "@/lib/products";
+import { useState } from "react";
+import type { Product } from "@/lib/products";
 import type { DesignLayer } from "./DesignCanvas";
 
 type Props = {
@@ -30,6 +31,7 @@ type Props = {
   hasDesign: boolean;
   saving: boolean;
   isEditing?: boolean;
+  bulkMode?: boolean;
 };
 
 export default function DesignControls({
@@ -55,35 +57,60 @@ export default function DesignControls({
   hasDesign,
   saving,
   isEditing = false,
+  bulkMode = false,
 }: Props) {
   const hasActiveLayer = activeLayerId !== null;
+  const [showPerGarment, setShowPerGarment] = useState(false);
 
   return (
-    <div className="design-controls">
+    <div className="design-controls design-controls--term">
       {/* Front / Back toggle */}
       {product.printAreas.length > 1 && (
-        <div className="design-controls__sides">
-          {product.printAreas.map((side) => {
-            const available = hasSidePhoto(product, side, selectedColor);
-            return (
-              <button
-                key={side}
-                className={`design-controls__side-btn ${activeSide === side ? "design-controls__side-btn--active" : ""}`}
-                onClick={() => available && onSideChange(side)}
-                disabled={!available}
-                title={available ? undefined : `${side.charAt(0).toUpperCase() + side.slice(1)} photo unavailable for ${selectedColor}`}
-                style={!available ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
-              >
-                {side.charAt(0).toUpperCase() + side.slice(1)}
-              </button>
-            );
-          })}
+        <div className="design-controls__card" data-term-label="Side">
+          <div className="design-controls__sides" style={{ marginBottom: 0 }}>
+            {product.printAreas.map((side) => {
+              // All sides are clickable in the two-canvas designer; the inactive
+              // canvas falls back to a placeholder if there's no photo for that side.
+              const available = true;
+              return (
+                <button
+                  key={side}
+                  className={`design-controls__side-btn ${activeSide === side ? "design-controls__side-btn--active" : ""}`}
+                  onClick={() => available && onSideChange(side)}
+                  disabled={!available}
+                  title={available ? undefined : `${side.charAt(0).toUpperCase() + side.slice(1)} photo unavailable for ${selectedColor}`}
+                  style={!available ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+                >
+                  {side.charAt(0).toUpperCase() + side.slice(1)}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* Layers */}
-      <div className="design-controls__section-label">Layers ({activeSide})</div>
-      <div className="design-controls__layers">
+      {/* Garment options (color + size) */}
+      <div className="design-controls__card" data-term-label="Garment">
+      <div className="design-controls__field">
+        <label>Color</label>
+        <select value={selectedColor} onChange={(e) => onColorChange(e.target.value)}>
+          {product.colors.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div style={{ marginTop: 8, fontSize: 12, color: "#d96b6b", fontWeight: 400 }}>
+        Color &amp; size set per recipient at checkout
+      </div>
+      </div>
+
+      {/* Your design (layers) */}
+      <div className="design-controls__card" data-term-label="Design">
+      <div className="design-controls__section-label">Your design ({activeSide})</div>
+      <div className="design-controls__layers" style={{ marginBottom: 0 }}>
         {layers.map((layer, i) => (
           <div
             key={layer.id}
@@ -108,37 +135,12 @@ export default function DesignControls({
           + Add design
         </button>
       </div>
-
-      <h3>Product Options</h3>
-
-      <div className="design-controls__field">
-        <label>Size</label>
-        <select value={selectedSize} onChange={(e) => onSizeChange(e.target.value)}>
-          {product.sizes.map((s) => (
-            <option key={s} value={s}>
-              {s}
-              {product.measurements?.widthBySize[s]
-                ? ` — ${product.measurements.widthBySize[s]}" × ${product.measurements.lengthBySize[s]}"`
-                : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="design-controls__field">
-        <label>Color</label>
-        <select value={selectedColor} onChange={(e) => onColorChange(e.target.value)}>
-          {product.colors.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
       </div>
 
       {hasActiveLayer && (
         <>
-          <div className="design-controls__field">
+          <div className="design-controls__card" data-term-label="Scale">
+          <div className="design-controls__field" style={{ marginBottom: 0 }}>
             <label>Design Scale: {Math.round(scale * 100)}%</label>
             <input
               type="range"
@@ -148,16 +150,78 @@ export default function DesignControls({
               value={scale}
               onChange={(e) => onScaleChange(parseFloat(e.target.value))}
             />
+            {designDimensions && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  marginTop: 8,
+                }}
+              >
+                <span style={{ fontSize: 12, color: "#1a1a1a" }}>
+                  {designDimensions.widthCm.toFixed(1)} × {designDimensions.heightCm.toFixed(1)} cm
+                </span>
+                {product.measurements && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPerGarment((v) => !v)}
+                    style={{
+                      background: "rgba(var(--accent-rgb), 0.15)",
+                      border: "none",
+                      color: "var(--accent-active)",
+                      borderRadius: 8,
+                      padding: "4px 8px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {showPerGarment ? "Hide ▴" : "Per size ▾"}
+                  </button>
+                )}
+              </div>
+            )}
+            {showPerGarment && designDimensions && product.measurements && (() => {
+              const widths = product.measurements.widthBySize;
+              const refSize = product.sizes.find((s) => s === "L") ?? product.sizes.find((s) => s === "M") ?? product.sizes[0];
+              const refWidth = widths[refSize];
+              if (!refWidth) return null;
+              return (
+                <div style={{ marginTop: 8, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
+                      gap: "4px 16px",
+                    }}
+                  >
+                    {product.sizes.map((size) => {
+                      const sw = widths[size];
+                      if (!sw) return null;
+                      const factor = sw / refWidth;
+                      const w = designDimensions.widthCm * factor;
+                      const h = designDimensions.heightCm * factor;
+                      return (
+                        <div key={size}>
+                          <span style={{ display: "inline-block", minWidth: 32, fontWeight: 600 }}>{size}</span>
+                          {w.toFixed(1)} × {h.toFixed(1)} cm
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ marginTop: 4, fontStyle: "italic", color: "#999" }}>
+                    Print scales proportionally to garment width.
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
           </div>
 
-          {/* Dimensions display */}
-          {designDimensions && (
-            <div className="design-controls__dimensions">
-              {designDimensions.widthCm.toFixed(1)} × {designDimensions.heightCm.toFixed(1)} cm
-            </div>
-          )}
-
           {/* Alignment tools */}
+          <div className="design-controls__card" data-term-label="Align">
           <div className="design-controls__section-label">Align Design</div>
           <div className="design-controls__align-row">
             <button className="design-controls__align-btn" onClick={() => onAlign("left")} title="Align left">
@@ -208,30 +272,33 @@ export default function DesignControls({
           <button
             className="btn btn--outline"
             onClick={onReset}
-            style={{ width: "100%", marginBottom: 12, marginTop: 16 }}
+            style={{ width: "100%", marginBottom: 0, marginTop: 16 }}
           >
             Reset position
           </button>
+          </div>
         </>
       )}
 
-      <button
-        className="btn btn--dark"
-        onClick={onSave}
-        disabled={!hasDesign || saving}
-        style={{ width: "100%", marginBottom: 12 }}
-      >
-        {saving ? "Saving..." : isEditing ? "Update design" : "Save design"}
-      </button>
+      <div className="design-controls__card design-controls__card--actions">
+        <button
+          className="btn btn--dark"
+          onClick={onSave}
+          disabled={!hasDesign || saving}
+          style={{ width: "100%", marginBottom: 0 }}
+        >
+          {saving ? "Saving..." : isEditing ? "Update design" : "Save design"}
+        </button>
 
-      <button
-        className="btn btn--primary"
-        onClick={onAddToCart}
-        disabled={!hasDesign}
-        style={{ width: "100%" }}
-      >
-        Add to cart
-      </button>
+        <button
+          className="btn btn--primary"
+          onClick={onAddToCart}
+          disabled={!hasDesign}
+          style={{ width: "100%" }}
+        >
+          Continue to recipients →
+        </button>
+      </div>
     </div>
   );
 }

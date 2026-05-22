@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BulkModeBanner from "@/components/BulkModeBanner";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rendallpod.com";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <BulkModeBanner />
         <Header />
         <main>{children}</main>
         <Footer />

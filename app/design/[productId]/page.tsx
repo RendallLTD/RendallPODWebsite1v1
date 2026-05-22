@@ -4,12 +4,14 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getProductById, getDesignerPhoto, hasSidePhoto, type Product } from "@/lib/products";
 import { createClient } from "@/lib/supabase/client";
-import ImageUploader from "@/components/design/ImageUploader";
+import ImageUploader, { type ImageUploaderHandle } from "@/components/design/ImageUploader";
+import BulkStepper from "@/components/BulkStepper";
 import DesignCanvas from "@/components/design/DesignCanvas";
 import type { DesignLayer, LayerNaturalSize } from "@/components/design/DesignCanvas";
 import DesignControls from "@/components/design/DesignControls";
 import { aspectFitSize, pxToMm, isV2, type DesignConfigV2, type MmLayer } from "@/lib/design-schema";
 import { hydrateFromDesignConfig } from "@/lib/design/hydrate";
+import { STEP_2_CSS_VARS } from "@/lib/bulk-steps";
 import { use } from "react";
 
 type SideState = {
@@ -94,6 +96,13 @@ export default function DesignPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const designIdParam = searchParams.get("designId");
+  const bulkStart = searchParams.get("bulkStart") === "1";
+
+  // Add body class on the designer (hides global header/footer for the full-screen feel)
+  useEffect(() => {
+    document.body.classList.add("body--bulk-designer");
+    return () => document.body.classList.remove("body--bulk-designer");
+  }, []);
 
   // Edit mode: when a designId is in the URL, hydrate the saved row into
   // canvas state. Save then UPDATEs that row instead of inserting a copy.
@@ -119,6 +128,7 @@ export default function DesignPage({
   const [designRenderedSize, setDesignRenderedSize] = useState<{ w: number; h: number } | null>(null);
   // For triggering the file input from "Add design" button
   const [pendingUpload, setPendingUpload] = useState(false);
+  const uploaderRef = useRef<ImageUploaderHandle>(null);
   // Print-area DOM ref + per-layer natural sizes, captured from DesignCanvas
   // callbacks so we can convert to mm at save time.
   const printAreaRef = useRef<HTMLDivElement | null>(null);
@@ -139,13 +149,10 @@ export default function DesignPage({
     []
   );
 
-  // If user switches to a color that lacks the current side's photo, fall back to front
-  useEffect(() => {
-    if (!product) return;
-    if (!hasSidePhoto(product, activeSide, selectedColor)) {
-      setActiveSide(product.printAreas[0] ?? "front");
-    }
-  }, [product, activeSide, selectedColor]);
+  // Note: previously this effect forced activeSide back to front if the current side
+  // lacked a photo. With the two-canvas designer, all sides are editable regardless
+  // of photo availability (back canvas falls back to a 👕 placeholder), so the effect
+  // is no longer needed.
 
   // Edit mode: hydrate saved design into canvas state. Runs once per
   // designId once the print-area DOM node is mounted (so we have its
@@ -294,7 +301,7 @@ export default function DesignPage({
   );
 
   const handleAddLayer = useCallback(() => {
-    setPendingUpload(true);
+    uploaderRef.current?.openPicker();
   }, []);
 
   const handleLayerPositionChange = useCallback(
@@ -549,7 +556,7 @@ export default function DesignPage({
         return;
       }
 
-      router.push("/cart");
+      router.push(`/bulk-start?step=3&designId=${designId}&productId=${product.id}`);
     } finally {
       setSaving(false);
       addToCartInFlight.current = false;
@@ -583,7 +590,8 @@ export default function DesignPage({
   const showUploader = !previewMode && (current.layers.length === 0 || pendingUpload);
 
   return (
-    <section className="design-page">
+    <section className="design-page design-page--bulk" style={STEP_2_CSS_VARS}>
+      <BulkStepper step={2} />
       <div className="container">
         <h1 className="design-page__title">Design: {product.name}</h1>
         {hydrating && (
@@ -611,32 +619,39 @@ export default function DesignPage({
         )}
         <div className="design-page__layout">
           <div className="design-page__left">
-            <DesignCanvas
-              productPhoto={getDesignerPhoto(product, activeSide, selectedColor)}
-              layers={current.layers}
-              activeLayerId={current.activeLayerId}
-              printSpec={currentPrintSpec}
-              onLayerPositionChange={handleLayerPositionChange}
-              onSelectLayer={handleSelectLayer}
-              onDesignRenderedSize={setDesignRenderedSize}
-              previewMode={previewMode}
-              onPrintAreaRef={handlePrintAreaRef}
-              onLayerNaturalSize={handleLayerNaturalSize}
+            <div className="design-page__canvases">
+              {product.printAreas.map((side) => {
+                const isActive = side === activeSide;
+                const sideState = sides[side] ?? emptySide();
+                const sidePrintSpec = product.measurements?.printSpecs?.[side];
+                return (
+                  <div
+                    key={side}
+                    className={`design-page__canvas-slot ${isActive ? "design-page__canvas-slot--active" : ""}`}
+                    onClick={() => !isActive && setActiveSide(side)}
+                  >
+                    <div className="design-page__canvas-label">{side.toUpperCase()}</div>
+                    <DesignCanvas
+                      productPhoto={getDesignerPhoto(product, side, selectedColor)}
+                      layers={sideState.layers}
+                      activeLayerId={isActive ? sideState.activeLayerId : null}
+                      printSpec={sidePrintSpec}
+                      onLayerPositionChange={isActive ? handleLayerPositionChange : () => {}}
+                      onSelectLayer={isActive ? handleSelectLayer : () => {}}
+                      onDesignRenderedSize={isActive ? setDesignRenderedSize : () => {}}
+                      previewMode={previewMode || !isActive}
+                      onPrintAreaRef={isActive ? handlePrintAreaRef : undefined}
+                      onLayerNaturalSize={isActive ? handleLayerNaturalSize : undefined}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <ImageUploader
+              ref={uploaderRef}
+              onImageUpload={handleImageUpload}
+              hidden
             />
-            {showUploader && (
-              <ImageUploader
-                onImageUpload={handleImageUpload}
-              />
-            )}
-            {pendingUpload && (
-              <button
-                className="btn btn--outline"
-                onClick={() => setPendingUpload(false)}
-                style={{ marginTop: 8, width: "100%" }}
-              >
-                Cancel
-              </button>
-            )}
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button
                 className={`btn ${previewMode ? "btn--primary" : "btn--outline"}`}
@@ -671,6 +686,7 @@ export default function DesignPage({
               hasDesign={hasAnyDesign}
               saving={saving}
               isEditing={!!editingDesignId}
+              bulkMode={bulkStart}
             />
           </div>
         </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { subcategories, allProducts, getProductHero, type Product } from "@/lib/products";
+import BulkStepper from "@/components/BulkStepper";
 
 function ProductCard({ product }: { product: Product }) {
   return (
@@ -20,6 +21,7 @@ function ProductCard({ product }: { product: Product }) {
 export default function CatalogPage() {
   return (
     <>
+      <BulkStepper step={1} />
       <section className="catalog-hero">
         <div className="container">
           <h1>Rendall Catalog</h1>

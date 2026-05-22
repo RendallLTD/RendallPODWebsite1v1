@@ -61,25 +61,35 @@ export default function ProfitCalculator() {
             </select>
           </div>
           <div className="calculator__row">
-            <label htmlFor="sell-price">Your selling price ($)</label>
+            <label htmlFor="sell-price" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span>Your selling price</span>
+              <strong style={{ color: "var(--dark)", fontSize: 16 }}>${sellPrice.toFixed(2)}</strong>
+            </label>
             <input
-              type="number"
+              type="range"
               id="sell-price"
               value={sellPrice}
-              min={0}
-              step={0.01}
+              min={5}
+              max={100}
+              step={0.5}
               onChange={(e) => setSellPrice(parseFloat(e.target.value) || 0)}
+              style={{ width: "100%" }}
             />
           </div>
           <div className="calculator__row">
-            <label htmlFor="daily-sales">Estimated daily sales</label>
+            <label htmlFor="daily-sales" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span>Estimated daily sales</span>
+              <strong style={{ color: "var(--dark)", fontSize: 16 }}>{dailySales} / day</strong>
+            </label>
             <input
-              type="number"
+              type="range"
               id="daily-sales"
               value={dailySales}
               min={0}
+              max={100}
               step={1}
               onChange={(e) => setDailySales(parseInt(e.target.value) || 0)}
+              style={{ width: "100%" }}
             />
           </div>
           <div style={{ textAlign: "center", padding: "12px 0", fontSize: 14, color: "var(--text-secondary)" }}>
@@ -100,25 +110,21 @@ export default function ProfitCalculator() {
             <a
               href="/signup"
               style={{
-                position: "relative",
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "100%",
-                maxWidth: 280,
-                aspectRatio: "3 / 1",
-                margin: "0 auto",
+                padding: "16px 32px",
+                background: "#1a1a1a",
+                color: "#fff",
+                fontFamily: '"PP Neue Machina", "Hack", monospace',
+                fontSize: 18,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
                 textDecoration: "none",
+                whiteSpace: "nowrap",
               }}
             >
-              <img
-                src="/start-designing-splat.svg"
-                alt=""
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill", transform: "translateY(-8px)", filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.18))" }}
-              />
-              <span style={{ position: "relative", color: "#1a1a1a", fontWeight: 900, fontSize: 24, textAlign: "center", whiteSpace: "nowrap" }}>
-                Start designing
-              </span>
+              [ Start designing →&nbsp;]
             </a>
           </div>
         </div>

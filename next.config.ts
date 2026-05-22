@@ -4,9 +4,10 @@ import type { NextConfig } from "next";
 // phones telemetry home to o11y(-demo).airwallex.com, and mounts PCI-scoped
 // card fields in iframes under checkout(-demo).airwallex.com. Whitelist the
 // wildcard so both demo and prod work without env-specific config.
+const isDev = process.env.NODE_ENV !== "production";
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://*.airwallex.com",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.airwallex.com`,
   "style-src 'self' 'unsafe-inline' https://*.airwallex.com",
   "img-src 'self' data: blob: https://*.supabase.co https://*.airwallex.com https://*.r2.dev https://*.r2.cloudflarestorage.com",
   "font-src 'self' data: https://*.airwallex.com",

@@ -50,6 +50,10 @@ export default function DesignCanvas({
   onLayerNaturalSize,
 }: Props) {
   const printAreaRef = useRef<HTMLDivElement>(null);
+  // Bumped whenever the print area resizes — forces re-render so getLayerStyle
+  // recomputes the image's px width/height against the new clientWidth/Height.
+  // Without this, the image's inline width/height stay stale on viewport resize.
+  const [, setResizeTick] = useState(0);
   const setPrintAreaRef = useCallback(
     (el: HTMLDivElement | null) => {
       printAreaRef.current = el;
@@ -57,6 +61,14 @@ export default function DesignCanvas({
     },
     [onPrintAreaRef]
   );
+
+  useEffect(() => {
+    const el = printAreaRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setResizeTick((t) => t + 1));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const posAtDragStart = useRef({ x: 0, y: 0 });
@@ -214,7 +226,7 @@ export default function DesignCanvas({
       transform: `translate(${layer.position.x}px, ${layer.position.y}px) scale(${layer.scale})`,
       cursor: previewMode ? "default" : isDraggingThis ? "grabbing" : "grab",
       position: "absolute",
-      outline: isActive ? "2px solid rgba(255, 93, 53, 0.8)" : "none",
+      outline: isActive ? "2px solid rgba(var(--accent-rgb), 0.8)" : "none",
       outlineOffset: "2px",
       zIndex: isActive ? 10 : 1,
     };
@@ -294,19 +306,34 @@ export default function DesignCanvas({
         {layers.length === 0 && !previewMode && (
           <div className="design-canvas__placeholder">Upload a design to preview</div>
         )}
-
-        {!previewMode && printSpec && (
-          <div className="design-canvas__print-label">
-            Print area: {Math.round(printSpec.widthMm / 10)} × {Math.round(printSpec.heightMm / 10)} cm
-          </div>
-        )}
-
-        {!previewMode && dimensionLabel && (
-          <div className="design-canvas__dimension-label">
-            Design: {dimensionLabel}
-          </div>
-        )}
       </div>
+
+      {!previewMode && (printSpec || dimensionLabel) && (
+        <div
+          style={{
+            position: "absolute",
+            top: `calc(${(overlay.top + overlay.height) * 100}% + 6px)`,
+            left: `${overlay.left * 100}%`,
+            width: `${overlay.width * 100}%`,
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 8,
+            pointerEvents: "none",
+            zIndex: 2,
+          }}
+        >
+          {printSpec ? (
+            <span className="design-canvas__print-label">
+              Print area: {Math.round(printSpec.widthMm / 10)} × {Math.round(printSpec.heightMm / 10)} cm
+            </span>
+          ) : <span />}
+          {dimensionLabel && (
+            <span className="design-canvas__dimension-label">
+              Design: {dimensionLabel}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

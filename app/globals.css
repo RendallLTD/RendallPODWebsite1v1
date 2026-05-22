@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: "LED Dot Matrix";
-  src: url("/fonts/led-dot-matrix.ttf") format("truetype");
+  src: url("/fonts/use/led-dot-matrix.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: "Helvetica Custom";
-  src: url("/fonts/Helvetica.ttf") format("truetype");
+  src: url("/fonts/use/Helvetica.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -24,10 +24,60 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Hack";
+  src: url("/fonts/use/Hack-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hack";
+  src: url("/fonts/Hack-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hack";
+  src: url("/fonts/Hack-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Hack";
+  src: url("/fonts/Hack-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Machina";
+  src: url("/fonts/use/PPNeueMachina-InktrapLight.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Machina";
+  src: url("/fonts/use/PPNeueMachina-InktrapRegular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --accent: #ff5c35;
-  --accent-hover: #ff7a5a;
-  --accent-active: #e04420;
+  /* ─── COLORS ─────────────────────────────────────────── */
+  --accent: #859aa6;
+  --accent-hover: #9aabb6;
+  --accent-active: #6b8290;
+  --accent-rgb: 133, 154, 166;
   --dark: #1a1a1a;
   --text: #1a1a1a;
   --text-secondary: #4a4a4a;
@@ -36,19 +86,70 @@
   --bg-tertiary: #e5e5e5;
   --border: #e5e5e5;
   --border-strong: #6b6b6b;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 12px;
+
+  /* Step-flow accents (bulk wizard) */
+  --step-1: #d96b6b;   --step-1-tint: #fbeaea;
+  --step-2: #5e7ba8;   --step-2-tint: #e7ebf2;
+  --step-3: #67b079;   --step-3-tint: #e3efe6;
+
+  /* ─── RADIUS (squared site-wide) ──────────────────────── */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+
+  /* ─── SPACING (8px grid; 4px = half-step) ─────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+
+  /* ─── TYPE SCALE ──────────────────────────────────────── */
+  --text-caption: 12px;   /* UPPERCASE labels, chips, tier names */
+  --text-body:    14px;   /* body, table rows, taglines */
+  --text-display: 20px;   /* display numbers, button text, inline emphasis */
+  --text-hero:    48px;   /* hero numerals (the dotted % on pricing cards) */
+
+  /* ─── LETTER-SPACING for UPPERCASE ────────────────────── */
+  --track-tight:  0.04em;  /* big titles 24px+ */
+  --track-medium: 0.05em;  /* buttons, mid-size caps 16-20px */
+  --track-wide:   0.08em;  /* small caps 12-14px */
+
+  /* ─── STANZA RHYTHM (within-component vertical spacing) ─ */
+  --stanza-tight:  4px;    /* tight pair (number → subtitle) */
+  --stanza-snug:   8px;    /* inside a section (chip → content) */
+  --stanza-mid:    24px;   /* between stanzas in a component */
+  --stanza-wide:   32px;   /* between major sections in a card */
+  --stanza-page:   48px;   /* between major page sections */
 }
 
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: "Helvetica Custom", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
   color: var(--text);
   background: var(--bg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Site-wide ASCII type system ─────────────────────────────────────
+ * Body: Hack (monospace, single weight)
+ * Headings: PP Neue Machina Inktrap (display, UPPERCASE)
+ * Buttons: PP Neue Machina UPPERCASE
+ * Logo keeps LED Dot Matrix for brand recognition.
+ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "PP Neue Machina", "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.btn {
+  font-family: "PP Neue Machina", "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -120,11 +221,11 @@ ul { list-style: none; }
 .hero { padding: 80px 0 60px; text-align: center; }
 .font-dot { font-family: "LED Dot Matrix", sans-serif; }
 .hero__logo { display: block; margin: 0 auto 32px; }
-.hero h1 { font-family: "LED Dot Matrix", sans-serif; font-size: clamp(36px, 5vw, 64px); font-weight: 900; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 24px; }
+.hero h1 { font-size: clamp(36px, 5vw, 64px); font-weight: 400; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 24px; }
 
 .hero__checks { display: flex; justify-content: center; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
-.hero__check { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--text-secondary); }
-.hero__check svg { width: 20px; height: 20px; color: var(--accent-active); flex-shrink: 0; }
+.hero__check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
+.hero__check svg { width: 16px; height: 16px; color: var(--accent-active); flex-shrink: 0; }
 
 .hero__cta { margin-bottom: 12px; }
 .hero__sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 40px; }
@@ -228,7 +329,7 @@ ul { list-style: none; }
 
 .catalog-divider { border: none; border-top: 1px solid var(--border); margin: 0 0 32px; }
 .catalog-section { padding: 32px 0; }
-.catalog-section h2 { font-family: "LED Dot Matrix", sans-serif; font-size: 28px; font-weight: 900; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+.catalog-section h2 { font-size: 28px; font-weight: 400; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
 .catalog-section h2 .count { font-size: 14px; font-weight: 500; color: var(--text-secondary); background: var(--bg-secondary); padding: 4px 10px; border-radius: 12px; }
 
 .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
@@ -252,12 +353,13 @@ ul { list-style: none; }
 .design-canvas { position: relative; aspect-ratio: 1; background: var(--bg-secondary); border-radius: var(--radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .design-canvas__product { font-size: 200px; opacity: 0.3; }
 .design-canvas__product-photo { width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; }
-.design-canvas__print-area { position: absolute; border: 2px dashed rgba(255, 93, 53, 0.5); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border-color 0.2s; }
+.design-canvas__print-area { position: absolute; border: 2px dashed rgba(var(--accent-rgb), 0.5); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border-color 0.2s; }
 .design-canvas__print-area--preview { border-color: transparent; }
 .design-canvas__design { user-select: none; transform-origin: center center; }
-.design-canvas__placeholder { font-size: 14px; color: var(--text-secondary); }
-.design-canvas__print-label { position: absolute; bottom: 4px; left: 4px; font-size: 10px; color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 3px; pointer-events: none; z-index: 2; }
-.design-canvas__dimension-label { position: absolute; bottom: 4px; right: 4px; font-size: 10px; color: #fff; background: rgba(255, 93, 53, 0.7); padding: 2px 6px; border-radius: 3px; pointer-events: none; font-weight: 600; z-index: 2; }
+.design-canvas { container-type: inline-size; }
+.design-canvas__placeholder { font-size: clamp(9px, 3cqi, 14px); color: var(--text-secondary); text-align: center; padding: 4px; line-height: 1.3; }
+.design-canvas__print-label { font-size: 10px; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.55); padding: 2px 6px; border-radius: 3px; }
+.design-canvas__dimension-label { font-size: 10px; color: #fff; background: rgba(var(--accent-rgb), 0.85); padding: 2px 6px; border-radius: 3px; font-weight: 600; }
 
 .uploader { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 40px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; margin-top: 16px; }
 .uploader:hover { border-color: var(--accent-active); background: var(--bg-secondary); }
@@ -265,42 +367,322 @@ ul { list-style: none; }
 .uploader__text { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .uploader__sub { font-size: 13px; color: var(--text-secondary); }
 
-.design-controls { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; }
-.design-controls h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
-.design-controls__field { margin-bottom: 20px; }
-.design-controls__field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-.design-controls__field select,
-.design-controls__field input[type="range"] { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; }
-.design-controls__field input[type="range"] { padding: 4px 0; border: none; }
+.design-controls { background: transparent; border: none; border-radius: 0; padding: 0; display: flex; flex-direction: column; gap: 24px; }
+.design-controls__card { background: transparent; border: none; border-radius: 0; padding: 0; }
+.design-controls__card--actions { background: transparent; border: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 
-/* Front / Back toggle */
-.design-controls__sides { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
-.design-controls__side-btn { flex: 1; padding: 10px 16px; font-size: 14px; font-weight: 600; font-family: inherit; border: none; background: #fff; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
-.design-controls__side-btn--active { background: var(--dark); color: #fff; }
-.design-controls__side-btn:not(.design-controls__side-btn--active):hover { background: var(--bg-secondary); }
+/* ─── Terminal aesthetic (bulkMode) ──────────────────────────────────── */
+.design-controls--term { font-family: "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace; gap: 20px; }
+.design-controls--term .design-controls__card:not(.design-controls__card--actions) {
+  background: #fafafa;
+  border: none;
+  border-radius: 4px;
+  padding: 20px 16px 16px;
+  position: relative;
+}
+.design-controls--term .design-controls__card[data-term-label]:not(.design-controls__card--actions)::before {
+  content: "[ " attr(data-term-label) " ]";
+  position: absolute;
+  top: -22px;
+  left: 0;
+  z-index: 2;
+  background: #e7ebf2;
+  color: var(--accent-active);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+/* Inputs / selects: terminal look (transparent, no border) */
+.design-controls--term .design-controls__field select,
+.design-controls--term .design-controls__field input[type="range"] {
+  background: transparent;
+  font-family: inherit;
+}
+.design-controls--term .design-controls__field select {
+  border: 1px solid #ddd;
+  padding: 8px 10px;
+}
+.design-controls--term .design-controls__field label,
+.design-controls--term .design-controls__section-label { color: #1a1a1a; font-family: inherit; font-weight: 600; }
+
+/* Front / Back toggle in term mode */
+.design-controls--term .design-controls__sides { background: transparent; padding: 0; gap: 8px; }
+.design-controls--term .design-controls__side-btn { border: 1px solid #1a1a1a; border-radius: 4px; background: #fff; font-family: inherit; }
+.design-controls--term .design-controls__side-btn--active { background: #1a1a1a; color: #fff; box-shadow: none; }
+
+/* Align toolbar in term mode */
+.design-controls--term .design-controls__align-row { background: transparent; padding: 0; gap: 6px; }
+.design-controls--term .design-controls__align-btn { border: 1px solid #1a1a1a; background: #fff; border-radius: 4px; }
+.design-controls--term .design-controls__align-btn:hover:not(:disabled) { background: #1a1a1a; color: #fff; }
+.design-controls--term .design-controls__align-divider { background: rgba(0,0,0,0.15); }
+
+/* Layers list in term mode */
+.design-controls--term .design-controls__layer { background: transparent; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
+.design-controls--term .design-controls__layer:hover { background: #fafafa; }
+.design-controls--term .design-controls__layer--active { background: transparent; border-color: var(--accent); }
+.design-controls--term .design-controls__add-layer { background: transparent; border: 1px dashed #1a1a1a; border-radius: 4px; color: #1a1a1a; font-family: inherit; }
+.design-controls--term .design-controls__add-layer:hover { background: #fafafa; }
+
+/* Buttons in term mode (Save / Continue / Reset) */
+.design-controls--term .btn { font-family: inherit; border-radius: 4px; }
+
+/* ─── Bulk designer: Hack 400 base, PP Neue Machina for UPPERCASE ───── */
+
+/* Kill Helvetica everywhere on the bulk page — Hack is the default body */
+.design-page--bulk,
+.design-page--bulk .design-canvas__dimension-label,
+.design-page--bulk .btn { font-family: "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace; }
+
+/* ─── Bulk designer: Hack 400 only, 3-size ladder (12/16/24) ────────── */
+
+/* Crush every weight inside the Hack scope to 400 (kills 500/600 fallbacks) */
+.design-controls--term,
+.design-controls--term *,
+.design-controls--term *::before,
+.design-controls--term *::after { font-weight: 400 !important; }
+
+/* Page title — only size-24 piece, PP Neue Machina */
+.design-page--bulk .design-page__title {
+  font-family: "PP Neue Machina", "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  font-size: 24px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Size 16 — primary buttons + side toggle, UPPERCASE, PP Neue Machina */
+.design-controls--term .btn,
+.design-controls--term .design-controls__side-btn {
+  font-family: "PP Neue Machina", "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Size 12 — uppercase labels/chips in PP Neue Machina */
+.design-controls--term .design-controls__field label,
+.design-controls--term .design-controls__section-label,
+.design-controls--term .design-controls__card[data-term-label]::before {
+  font-family: "PP Neue Machina", "Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Force transparent — tint should ONLY live on the chip pills */
+.design-controls--term .design-controls__section-label {
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.design-controls--term .design-controls__layer-name,
+.design-controls--term .design-controls__add-layer,
+.design-controls--term .design-controls__dimensions { font-size: 12px; }
+
+/* Select values (e.g. "White") snap to 16 to stay on the 12/16/24 grid */
+.design-controls--term .design-controls__field select { font-size: 16px; }
+
+/* ── ASCII pass ── square every corner in bulk mode */
+.design-page--bulk *,
+.design-page--bulk *::before,
+.design-page--bulk *::after { border-radius: 0 !important; }
+
+/* ═════ Pricing cards — hover focus (size up + dim siblings) ═══════════ */
+.pricing-card {
+  transition: transform 0.25s ease, opacity 0.25s ease, filter 0.25s ease;
+}
+.pricing-card:hover {
+  transform: scale(1.02);
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.pricing-grid:has(.pricing-card:hover) .pricing-card:not(:hover) {
+  opacity: 0.75;
+  filter: grayscale(0.4);
+}
+
+/* ═════ Pricing cards — blinking terminal cursor on hover ══════════════ */
+.pricing-card::after {
+  content: "_";
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-family: "Hack", monospace;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--card-accent, var(--dark));
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.pricing-card:hover::after {
+  opacity: 1;
+  animation: pricing-cursor-blink 1s steps(2) infinite;
+}
+@keyframes pricing-cursor-blink {
+  50% { opacity: 0; }
+}
+
+/* ═════ Hero model slots — reusable for future model rotations ═════════
+ * Each slot is a fixed-height clipping container. Images render at their
+ * --slot-render-height (can exceed container height for zoom/clip effect).
+ * Variables let any image swap in without re-tuning per asset.
+ */
+.hero-model-slot {
+  --slot-height: 70vh;          /* container height (defines row height) */
+  --slot-render-height: 70vh;   /* image natural render height */
+  --slot-offset-y: 0;            /* vertical nudge: negative = up, positive = down */
+  height: var(--slot-height);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;       /* anchor image to TOP — clips legs */
+  justify-content: center;
+  transform: translateY(var(--slot-offset-y));
+}
+.hero-model-slot > img {
+  max-height: var(--slot-render-height);
+  height: auto;
+  width: auto;
+  max-width: 100%;
+  display: block;
+}
+/* "Zoom" modifier — image renders taller than its container, clipping bottom.
+ * max-width is unbounded here so vh height is the actual constraint. The slot's
+ * overflow:hidden clips horizontal spill cleanly. */
+.hero-model-slot--zoom {
+  --slot-render-height: 88vh;
+}
+.hero-model-slot--zoom > img {
+  max-width: none;
+}
+
+/* Bulk designer hides the global site chrome (header + footer) */
+body.body--bulk-designer .header,
+body.body--bulk-designer .footer { display: none !important; }
+
+/* Bulk designer fills the full viewport width (overrides global .container cap) */
+.design-page--bulk { padding: 16px 0 !important; }
+.design-page--bulk > .container {
+  max-width: none;
+  padding: 0 24px;
+}
+.design-page--bulk .design-page__layout {
+  grid-template-columns: 1fr 360px;
+  gap: 40px;
+}
+/* Shrink the bulk banner and title to free vertical space */
+.design-page--bulk > .container > div:first-child {
+  margin-bottom: 8px !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+}
+.design-page--bulk .design-page__title {
+  font-size: 18px !important;
+  margin-bottom: 12px !important;
+}
+/* Compress the bulk control panel so it fits one viewport without scroll */
+.design-page--bulk .design-controls--term { gap: 28px; }
+.design-page--bulk .design-controls--term .design-controls__card:not(.design-controls__card--actions) {
+  padding: 14px 12px 10px !important;
+}
+.design-page--bulk .design-controls--term .btn {
+  padding: 10px 24px;
+  font-size: 14px;
+}
+.design-page--bulk .design-controls--term .design-controls__card--actions { gap: 6px; }
+
+/* Bulk: render front + back canvases side by side */
+.design-page--bulk .design-page__canvases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  width: 100%;
+}
+.design-page--bulk .design-page__canvas-slot {
+  position: relative;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.design-page--bulk .design-page__canvas-slot:not(.design-page__canvas-slot--active) {
+  opacity: 0.55;
+}
+.design-page--bulk .design-page__canvas-slot:not(.design-page__canvas-slot--active):hover {
+  opacity: 0.8;
+}
+.design-page--bulk .design-page__canvas-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  font-family: "PP Neue Machina", "Hack", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  background: #1a1a1a;
+  color: #fff;
+  padding: 2px 8px;
+}
+.design-page--bulk .design-page__canvas-slot--active .design-page__canvas-label {
+  background: var(--accent-active);
+}
+
+/* Active side button gets a caret indicator: > FRONT */
+.design-controls--term .design-controls__side-btn--active::before {
+  content: "> ";
+}
+
+/* Canvas overlays: flat black tags, no rounded pills */
+.design-page--bulk .design-canvas__dimension-label {
+  background: #1a1a1a !important;
+  font-family: "Hack", monospace;
+  letter-spacing: 0.04em;
+}
+
+/* Add-layer button: bracket-wrapped */
+.design-controls--term .design-controls__add-layer {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.design-controls--term .design-controls__add-layer::before { content: "[ "; }
+.design-controls--term .design-controls__add-layer::after { content: " ]"; }
+.design-controls h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+.design-controls__field { margin-bottom: 0; }
+.design-controls__field label { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.design-controls__field select,
+.design-controls__field input[type="range"] { width: 100%; padding: 12px 14px; border: none; border-radius: 10px; background: #f1f1f1; font-size: 14px; font-family: inherit; color: var(--text); outline: none; transition: background 0.15s; }
+.design-controls__field select:hover { background: #ebebeb; }
+.design-controls__field select:focus { background: #e6e6e6; }
+.design-controls__field input[type="range"] { padding: 4px 0; background: transparent; }
+
+/* Front / Back toggle (pill container, active = white pill) */
+.design-controls__sides { display: flex; gap: 4px; margin-bottom: 0; padding: 4px; border: none; border-radius: 10px; background: #f1f1f1; overflow: hidden; }
+.design-controls__side-btn { flex: 1; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; border: none; border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+.design-controls__side-btn--active { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.design-controls__side-btn:not(.design-controls__side-btn--active):hover { color: var(--text); }
 
 /* Alignment tools */
-.design-controls__section-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
-.design-controls__align-row { display: flex; align-items: center; gap: 4px; }
-.design-controls__align-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
-.design-controls__align-btn:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text); border-color: var(--text); }
+.design-controls__section-label { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.design-controls__align-row { display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; background: #f1f1f1; }
+.design-controls__align-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+.design-controls__align-btn:hover:not(:disabled) { background: #fff; color: var(--text); }
 .design-controls__align-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.design-controls__align-divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+.design-controls__align-divider { width: 1px; height: 20px; background: rgba(0,0,0,0.08); margin: 0 4px; }
 
 /* Layers list */
-.design-controls__layers { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; }
-.design-controls__layer { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; }
-.design-controls__layer:hover { background: var(--bg-secondary); }
-.design-controls__layer--active { border-color: var(--accent); background: rgba(255, 93, 53, 0.06); }
+.design-controls__layers { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
+.design-controls__layer { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: none; border-radius: 10px; background: #f1f1f1; cursor: pointer; transition: all 0.15s; }
+.design-controls__layer:hover { background: #ebebeb; }
+.design-controls__layer--active { background: rgba(var(--accent-rgb), 0.18); }
 .design-controls__layer-thumb { width: 32px; height: 32px; object-fit: contain; border-radius: 3px; background: var(--bg-secondary); flex-shrink: 0; }
 .design-controls__layer-name { font-size: 13px; font-weight: 500; flex: 1; }
 .design-controls__layer-delete { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: none; background: none; color: var(--text-secondary); cursor: pointer; font-size: 16px; border-radius: 3px; flex-shrink: 0; }
 .design-controls__layer-delete:hover { background: #fef2f2; color: #dc2626; }
-.design-controls__add-layer { padding: 8px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: none; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; font-family: inherit; transition: all 0.15s; }
-.design-controls__add-layer:hover { border-color: var(--accent); color: var(--accent); background: rgba(255, 93, 53, 0.04); }
+.design-controls__add-layer { padding: 10px; border: none; border-radius: 10px; background: #f1f1f1; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.design-controls__add-layer:hover { color: var(--text); background: #ebebeb; }
 
 /* Dimensions display */
-.design-controls__dimensions { font-size: 14px; font-weight: 600; color: var(--accent-active); text-align: center; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius-sm); margin-bottom: 16px; }
+.design-controls__dimensions { font-size: 14px; font-weight: 600; color: var(--accent-active); text-align: center; padding: 0; background: transparent; border-radius: 0; margin-bottom: 0; }
 
 /* ===== PRODUCT DETAIL ===== */
 .product-detail { padding: 48px 0 80px; }
@@ -318,31 +700,6 @@ ul { list-style: none; }
 .tag { padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; color: var(--text-secondary); }
 .product-detail__meta { display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary); margin-bottom: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
 .product-detail__cta { width: 100%; }
-
-.btn--splat {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 360px;
-  aspect-ratio: 3077 / 2353;
-  margin: 0 auto;
-  padding: 0;
-  background: url('/start-designing-splat.svg') no-repeat center / contain;
-  border: none;
-  color: var(--dark);
-  font-family: inherit;
-  font-weight: 900;
-  font-size: 24px;
-  letter-spacing: -0.01em;
-  text-align: center;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.btn--splat:hover { transform: scale(1.04) rotate(-2deg); }
-.btn--splat:active { transform: scale(0.98); }
 
 /* ===== AUTH PAGES ===== */
 .auth-page { min-height: calc(100vh - 72px); display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--bg-secondary); }

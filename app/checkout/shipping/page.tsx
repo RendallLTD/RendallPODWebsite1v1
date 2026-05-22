@@ -80,10 +80,17 @@ export default function ShippingPage() {
       setItems(cart);
       // Default: one recipient per cart_item, prefilling size/color/qty
       // from the cart row. Sellers split rows themselves via "Add recipient".
-      setRecipients(cart.map((ci) => ({
+      const seeded = cart.map((ci) => ({
         ...blankRecipient(ci.id, ci.size, ci.color),
         quantity: Math.max(1, ci.quantity | 0),
-      })));
+      }));
+      const bulkMode = typeof window !== "undefined" && sessionStorage.getItem("rendall_bulk_mode") === "1";
+      if (bulkMode && cart.length > 0) {
+        const src = cart[0];
+        seeded.push(blankRecipient(src.id, src.size, src.color));
+        seeded.push(blankRecipient(src.id, src.size, src.color));
+      }
+      setRecipients(seeded);
       setLoading(false);
     })();
   }, [router]);
