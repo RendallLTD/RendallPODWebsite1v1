@@ -3,7 +3,7 @@ import { getProductById, getDesignerPhoto } from "@/lib/products";
 import { isV2, type DesignConfigV2 } from "@/lib/design-schema";
 import { renderPrintPng } from "./print";
 import { renderMockupPng } from "./mockup";
-import { uploadPng } from "./storage";
+import { uploadFactoryPng } from "./storage";
 
 export type RenderResult = {
   order_item_id: string;
@@ -82,21 +82,33 @@ export async function renderOrderItems(
 
       try {
         const printBuf = await renderPrintPng({ printSpec, layers });
-        const printKey = `prints/${item.order_id}/${item.id}/${side}.png`;
-        const printUrl = await uploadPng(printKey, printBuf);
+        const printKey = await uploadFactoryPng({
+          orderId: item.order_id,
+          itemId: item.id,
+          kind: "print",
+          side,
+          buffer: printBuf,
+        });
 
         const mockupBuf = await renderMockupPng({
           productPhotoPath: photoPath,
           printSpec,
           layers,
         });
-        const mockupKey = `mockups/${item.order_id}/${item.id}/${side}.png`;
-        const mockupUrl = await uploadPng(mockupKey, mockupBuf);
+        const mockupKey = await uploadFactoryPng({
+          orderId: item.order_id,
+          itemId: item.id,
+          kind: "mockup",
+          side,
+          buffer: mockupBuf,
+        });
 
-        updatePayload[`print_url_${side}`] = printUrl;
-        updatePayload[`mockup_url_${side}`] = mockupUrl;
-        resultUrls[`print_url_${side}` as keyof RenderResult] = printUrl;
-        resultUrls[`mockup_url_${side}` as keyof RenderResult] = mockupUrl;
+        // Column still named *_url_* for back-compat; value is an R2 key.
+        // Reads go through lib/render/asset-url.ts which detects key vs URL.
+        updatePayload[`print_url_${side}`] = printKey;
+        updatePayload[`mockup_url_${side}`] = mockupKey;
+        resultUrls[`print_url_${side}` as keyof RenderResult] = printKey;
+        resultUrls[`mockup_url_${side}` as keyof RenderResult] = mockupKey;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         perSideSkips.push(`${side}: render failed: ${msg}`);

@@ -2,6 +2,17 @@ import ExcelJS from "exceljs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isV2, type DesignConfigV2 } from "@/lib/design-schema";
 import { signFactoryItemUrl } from "@/lib/factory-files/sign";
+import { resolveRenderAsset } from "@/lib/render/asset-url";
+
+// Post-2026-05-28: render outputs live in private R2; factory uses column U
+// (signed ZIP) exclusively. For R2-key rows we leave R/S/V/W blank; for
+// legacy Supabase-URL rows we passthrough the URL untouched. This keeps the
+// CP导入 column count stable without per-row URL signing.
+function legacyUrlOrBlank(value: string | null): string {
+  const resolved = resolveRenderAsset(value);
+  if (!resolved) return "";
+  return resolved.kind === "legacy-url" ? resolved.url : "";
+}
 
 // 30 days. Covers the typical factory fulfillment window with margin. If a
 // re-export is needed beyond that, regenerate the XLSX — fresh signed URLs.
@@ -127,11 +138,11 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
       row[10] = ship.phone ?? ""; // K
       row[14] = item.color ?? ""; // O
       row[15] = item.size ?? ""; // P
-      row[17] = item.mockup_url_front ?? ""; // R
-      row[18] = item.print_url_front ?? ""; // S
+      row[17] = legacyUrlOrBlank(item.mockup_url_front); // R
+      row[18] = legacyUrlOrBlank(item.print_url_front); // S
       row[20] = signFactoryItemUrl(item.id, FACTORY_URL_TTL_SECONDS, siteUrl).url; // U
-      row[21] = item.mockup_url_back ?? ""; // V
-      row[22] = item.print_url_back ?? ""; // W
+      row[21] = legacyUrlOrBlank(item.mockup_url_back); // V
+      row[22] = legacyUrlOrBlank(item.print_url_back); // W
 
       ws.addRow(row);
     }

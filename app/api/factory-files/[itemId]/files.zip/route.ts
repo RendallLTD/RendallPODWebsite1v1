@@ -1,6 +1,7 @@
 import archiver from "archiver";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyFactoryItemSignature } from "@/lib/factory-files/sign";
+import { fetchAssetBuffer } from "@/lib/render/asset-url";
 
 export const runtime = "nodejs";
 
@@ -85,25 +86,26 @@ export async function GET(
   const item = data as unknown as ItemRow;
 
   const sides = [
-    { key: "front", printUrl: item.print_url_front, mockupUrl: item.mockup_url_front },
-    { key: "back", printUrl: item.print_url_back, mockupUrl: item.mockup_url_back },
+    { key: "front", printAsset: item.print_url_front, mockupAsset: item.mockup_url_front },
+    { key: "back", printAsset: item.print_url_back, mockupAsset: item.mockup_url_back },
   ].filter(
-    (s): s is { key: string; printUrl: string; mockupUrl: string } =>
-      !!s.printUrl && !!s.mockupUrl,
+    (s): s is { key: string; printAsset: string; mockupAsset: string } =>
+      !!s.printAsset && !!s.mockupAsset,
   );
 
   if (sides.length === 0) {
     return new Response("render not ready", { status: 409 });
   }
 
-  // Fetch every side's print + mockup in parallel.
+  // Fetch every side's print + mockup in parallel. fetchAssetBuffer detects
+  // R2 keys (post-2026-05-28) vs legacy Supabase URLs and dispatches.
   const fetched = await Promise.all(
     sides.flatMap((s) => [
-      fetch(s.printUrl).then(async (r) => ({ side: s.key, kind: "print" as const, ok: r.ok, buf: r.ok ? await r.arrayBuffer() : null })),
-      fetch(s.mockupUrl).then(async (r) => ({ side: s.key, kind: "mockup" as const, ok: r.ok, buf: r.ok ? await r.arrayBuffer() : null })),
+      fetchAssetBuffer(s.printAsset).then((buf) => ({ side: s.key, kind: "print" as const, buf })),
+      fetchAssetBuffer(s.mockupAsset).then((buf) => ({ side: s.key, kind: "mockup" as const, buf })),
     ]),
   );
-  if (fetched.some((f) => !f.ok || !f.buf)) {
+  if (fetched.some((f) => !f.buf)) {
     return new Response("asset fetch failed", { status: 502 });
   }
 
@@ -120,7 +122,7 @@ export async function GET(
       zip.on("error", (err) => controller.error(err));
 
       for (const f of fetched) {
-        zip.append(Buffer.from(f.buf as ArrayBuffer), {
+        zip.append(f.buf as Buffer, {
           name: `${filenameBase}_${f.kind}_${f.side}.png`,
         });
       }

@@ -117,11 +117,11 @@ export default async function AdminOrderDetailPage({
                   )}
                   <div style={{ fontSize: 13, marginTop: 8 }}>
                     <div style={{ fontWeight: 500, marginBottom: 2 }}>Front</div>
-                    <div>Print: {item.print_url_front ? <a href={item.print_url_front} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
-                    <div>Mockup: {item.mockup_url_front ? <a href={item.mockup_url_front} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
+                    <div>Print: {item.print_url_front ? <a href={`/api/admin/render-asset?item=${item.id}&kind=print&side=front`} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
+                    <div>Mockup: {item.mockup_url_front ? <a href={`/api/admin/render-asset?item=${item.id}&kind=mockup&side=front`} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
                     <div style={{ fontWeight: 500, marginTop: 6, marginBottom: 2 }}>Back</div>
-                    <div>Print: {item.print_url_back ? <a href={item.print_url_back} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
-                    <div>Mockup: {item.mockup_url_back ? <a href={item.mockup_url_back} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
+                    <div>Print: {item.print_url_back ? <a href={`/api/admin/render-asset?item=${item.id}&kind=print&side=back`} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
+                    <div>Mockup: {item.mockup_url_back ? <a href={`/api/admin/render-asset?item=${item.id}&kind=mockup&side=back`} target="_blank" rel="noreferrer">view</a> : <span style={{ opacity: 0.5 }}>not rendered</span>}</div>
                   </div>
                   <div style={{ marginTop: 12 }}>
                     <OrderItemActions itemId={item.id} />

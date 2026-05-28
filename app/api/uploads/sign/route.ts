@@ -4,6 +4,18 @@ import { enforce, limiters } from "@/lib/ratelimit";
 import { presignPut, publicUrl } from "@/lib/r2/client";
 import { designUploadKey, type ImageExt } from "@/lib/r2/keys";
 
+function getDesignsBucket(): string {
+  const b = process.env.R2_DESIGNS_BUCKET ?? process.env.R2_BUCKET;
+  if (!b) throw new Error("R2_DESIGNS_BUCKET (or legacy R2_BUCKET) env var missing");
+  return b;
+}
+
+function getDesignsPublicBase(): string {
+  const b = process.env.R2_PUBLIC_BASE_URL;
+  if (!b) throw new Error("R2_PUBLIC_BASE_URL env var missing");
+  return b;
+}
+
 export const runtime = "nodejs";
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -45,7 +57,7 @@ export async function POST(request: NextRequest) {
 
   let uploadUrl: string;
   try {
-    uploadUrl = await presignPut(key, contentType, contentLength, expiresIn);
+    uploadUrl = await presignPut(getDesignsBucket(), key, contentType, contentLength, expiresIn);
   } catch (err) {
     console.error("[uploads/sign] presign failed", {
       userId: user.id,
@@ -56,7 +68,7 @@ export async function POST(request: NextRequest) {
 
   return Response.json({
     uploadUrl,
-    publicUrl: publicUrl(key),
+    publicUrl: publicUrl(getDesignsPublicBase(), key),
     key,
     expiresIn,
   });

@@ -1,9 +1,11 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import type { Readable } from "node:stream";
 
 // Server-only R2 client. R2 speaks the S3 API, so we use the AWS SDK with
 // R2's account-scoped endpoint. Never import from a client component — this
-// file holds the secret key.
+// file holds the secret key. Bucket is a per-call argument so the same client
+// can serve multiple buckets (designs, factory exports).
 
 let cached: S3Client | null = null;
 
@@ -23,26 +25,15 @@ function getClient(): S3Client {
   return cached;
 }
 
-function getBucket(): string {
-  const bucket = process.env.R2_BUCKET;
-  if (!bucket) throw new Error("R2_BUCKET env var missing");
-  return bucket;
-}
-
-function getPublicBase(): string {
-  const base = process.env.R2_PUBLIC_BASE_URL;
-  if (!base) throw new Error("R2_PUBLIC_BASE_URL env var missing");
-  return base.replace(/\/+$/, "");
-}
-
 export async function presignPut(
+  bucket: string,
   key: string,
   contentType: string,
   contentLength: number,
   expiresIn = 300,
 ): Promise<string> {
   const cmd = new PutObjectCommand({
-    Bucket: getBucket(),
+    Bucket: bucket,
     Key: key,
     ContentType: contentType,
     ContentLength: contentLength,
@@ -50,6 +41,42 @@ export async function presignPut(
   return getSignedUrl(getClient(), cmd, { expiresIn });
 }
 
-export function publicUrl(key: string): string {
-  return `${getPublicBase()}/${key}`;
+export async function presignGet(
+  bucket: string,
+  key: string,
+  expiresIn = 300,
+): Promise<string> {
+  const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
+  return getSignedUrl(getClient(), cmd, { expiresIn });
+}
+
+export async function serverPutObject(
+  bucket: string,
+  key: string,
+  body: Buffer,
+  contentType: string,
+): Promise<void> {
+  const cmd = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: body,
+    ContentType: contentType,
+  });
+  await getClient().send(cmd);
+}
+
+export async function getObjectBuffer(bucket: string, key: string): Promise<Buffer> {
+  const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
+  const res = await getClient().send(cmd);
+  const body = res.Body as Readable | undefined;
+  if (!body) throw new Error(`R2 GetObject returned no body for ${bucket}/${key}`);
+  const chunks: Buffer[] = [];
+  for await (const chunk of body) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : Buffer.from(chunk as Uint8Array));
+  }
+  return Buffer.concat(chunks);
+}
+
+export function publicUrl(base: string, key: string): string {
+  return `${base.replace(/\/+$/, "")}/${key}`;
 }

@@ -1,0 +1,16 @@
+-- Deprecation note for the `factory-exports` Supabase storage bucket.
+--
+-- As of 2026-05-28, newly rendered factory outputs (print + mockup PNGs) are
+-- stored in private Cloudflare R2 bucket `rendall-factory-exports` instead of
+-- this Supabase bucket. See plan:
+--   plans/2026-05-28-factory-exports-r2-migration.md
+--
+-- The bucket is intentionally NOT dropped here: existing `order_items` rows
+-- shipped before the migration still hold legacy public URLs into this
+-- bucket, and the read path (lib/render/asset-url.ts) dual-reads R2 keys vs
+-- https URLs. A follow-up cleanup migration will drop the bucket once those
+-- legacy rows are backfilled or aged out.
+--
+-- This migration is intentionally a no-op so the migration tooling has a
+-- durable record of when the cutover happened.
+select 1;
