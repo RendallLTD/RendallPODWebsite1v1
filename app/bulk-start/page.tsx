@@ -160,9 +160,14 @@ function BulkStartContent() {
   // Designer-entry seeding: 3 blanks all bound to the just-created cart_item.
   // Reads the cart_item's actual size/color (set in the designer) AND the
   // design's per-side image URLs + layer geometry for accurate thumbnails.
+  // Re-entry from "← Edit design": the URL's cartItemId changes when the
+  // designer inserts a fresh cart_items row, so we update existing
+  // recipients in place (preserving address/phone/ref the user already
+  // typed) and just refresh the size/color/thumbnail bindings.
+  const seededCartItemId = recipients[0]?.cart_item_id;
   useEffect(() => {
-    if (step !== 3 || fromCart) return;
-    if (!product || !returningCartItemId || recipients.length > 0) return;
+    if (step !== 3 || fromCart || !product || !returningCartItemId) return;
+    if (seededCartItemId === returningCartItemId) return;
     (async () => {
       const supabase = createClient();
       // One round-trip: cart_item with embedded design.
@@ -182,21 +187,39 @@ function BulkStartContent() {
       const design = r ? (Array.isArray(r.design) ? r.design[0] : r.design) : null;
       const size = r?.size ?? product.sizes[Math.min(2, product.sizes.length - 1)] ?? product.sizes[0];
       const color = r?.color ?? product.colors[0];
-      const extras = {
-        designImageUrl: design?.image_url ?? undefined,
-        designImageUrlFront: design?.image_url_front ?? undefined,
-        designImageUrlBack: design?.image_url_back ?? undefined,
-        frontLayer: firstLayerPos(design?.design_config, "front"),
-        backLayer: firstLayerPos(design?.design_config, "back"),
-        productId: product.id,
+      const designContext = {
+        cart_item_id: returningCartItemId,
+        size,
+        color,
+        design_image_url: design?.image_url ?? undefined,
+        design_image_url_front: design?.image_url_front ?? undefined,
+        design_image_url_back: design?.image_url_back ?? undefined,
+        front_layer: firstLayerPos(design?.design_config, "front"),
+        back_layer: firstLayerPos(design?.design_config, "back"),
+        product_id: product.id,
       };
-      setRecipients([
-        blankRecipient(returningCartItemId, size, color, extras),
-        blankRecipient(returningCartItemId, size, color, extras),
-        blankRecipient(returningCartItemId, size, color, extras),
-      ]);
+      setRecipients((prev) => {
+        if (prev.length === 0) {
+          const extras = {
+            designImageUrl: designContext.design_image_url,
+            designImageUrlFront: designContext.design_image_url_front,
+            designImageUrlBack: designContext.design_image_url_back,
+            frontLayer: designContext.front_layer,
+            backLayer: designContext.back_layer,
+            productId: designContext.product_id,
+          };
+          return [
+            blankRecipient(returningCartItemId, size, color, extras),
+            blankRecipient(returningCartItemId, size, color, extras),
+            blankRecipient(returningCartItemId, size, color, extras),
+          ];
+        }
+        // Edit-design re-entry: preserve typed address/phone/ref, rebind
+        // the design-context fields.
+        return prev.map((row) => ({ ...row, ...designContext }));
+      });
     })();
-  }, [step, product, returningCartItemId, fromCart, recipients.length]);
+  }, [step, product, returningCartItemId, fromCart, seededCartItemId]);
 
   // Cart-entry seeding: load all of the user's cart_items, seed one
   // recipient per row carrying that row's id/size/color/qty. Empty cart
