@@ -158,53 +158,45 @@ function BulkStartContent() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Designer-entry seeding: 3 blanks all bound to the just-created cart_item.
-  // Also fetch the design's image_url once so recipient rows can render a
-  // thumbnail without an extra query per row.
+  // Reads the cart_item's actual size/color (set in the designer) AND the
+  // design's per-side image URLs + layer geometry for accurate thumbnails.
   useEffect(() => {
     if (step !== 3 || fromCart) return;
     if (!product || !returningCartItemId || recipients.length > 0) return;
-    const defaultSize = product.sizes[Math.min(2, product.sizes.length - 1)] ?? product.sizes[0];
-    const defaultColor = product.colors[0];
     (async () => {
-      let designImageUrl: string | undefined;
-      let designImageUrlFront: string | undefined;
-      let designImageUrlBack: string | undefined;
-      let frontLayer: LayerPos | undefined;
-      let backLayer: LayerPos | undefined;
-      if (returningDesignId) {
-        const supabase = createClient();
-        const { data: design } = await supabase
-          .from("designs")
-          .select("image_url, image_url_front, image_url_back, design_config")
-          .eq("id", returningDesignId)
-          .single();
-        const d = design as {
-          image_url: string | null;
-          image_url_front: string | null;
-          image_url_back: string | null;
-          design_config: unknown;
-        } | null;
-        designImageUrl = d?.image_url ?? undefined;
-        designImageUrlFront = d?.image_url_front ?? undefined;
-        designImageUrlBack = d?.image_url_back ?? undefined;
-        frontLayer = firstLayerPos(d?.design_config, "front");
-        backLayer = firstLayerPos(d?.design_config, "back");
-      }
+      const supabase = createClient();
+      // One round-trip: cart_item with embedded design.
+      const { data: row } = await supabase
+        .from("cart_items")
+        .select("size, color, design:designs(image_url, image_url_front, image_url_back, design_config)")
+        .eq("id", returningCartItemId)
+        .single();
+      const r = row as {
+        size: string | null;
+        color: string | null;
+        design:
+          | { image_url: string | null; image_url_front: string | null; image_url_back: string | null; design_config: unknown }
+          | { image_url: string | null; image_url_front: string | null; image_url_back: string | null; design_config: unknown }[]
+          | null;
+      } | null;
+      const design = r ? (Array.isArray(r.design) ? r.design[0] : r.design) : null;
+      const size = r?.size ?? product.sizes[Math.min(2, product.sizes.length - 1)] ?? product.sizes[0];
+      const color = r?.color ?? product.colors[0];
       const extras = {
-        designImageUrl,
-        designImageUrlFront,
-        designImageUrlBack,
-        frontLayer,
-        backLayer,
+        designImageUrl: design?.image_url ?? undefined,
+        designImageUrlFront: design?.image_url_front ?? undefined,
+        designImageUrlBack: design?.image_url_back ?? undefined,
+        frontLayer: firstLayerPos(design?.design_config, "front"),
+        backLayer: firstLayerPos(design?.design_config, "back"),
         productId: product.id,
       };
       setRecipients([
-        blankRecipient(returningCartItemId, defaultSize, defaultColor, extras),
-        blankRecipient(returningCartItemId, defaultSize, defaultColor, extras),
-        blankRecipient(returningCartItemId, defaultSize, defaultColor, extras),
+        blankRecipient(returningCartItemId, size, color, extras),
+        blankRecipient(returningCartItemId, size, color, extras),
+        blankRecipient(returningCartItemId, size, color, extras),
       ]);
     })();
-  }, [step, product, returningCartItemId, returningDesignId, fromCart, recipients.length]);
+  }, [step, product, returningCartItemId, fromCart, recipients.length]);
 
   // Cart-entry seeding: load all of the user's cart_items, seed one
   // recipient per row carrying that row's id/size/color/qty. Empty cart
