@@ -122,36 +122,6 @@ export const allProducts: Product[] = [
 
   // ── Bags ───────────────────────────────────────────────────────────────
   { id: "heavyweight-canvas-tote", brand: "Rendall", name: "Heavyweight Canvas Tote Bag", price: "$5.00", priceCents: 500, premium: "$4.00", meta: ["OSFM", "1 color"], emoji: "👜", category: "accessories", subcategory: "Bags", description: "12oz canvas tote bag (65% polyester / 35% cotton). Durable and spacious. Single-sided DTF print.", sizes: ["OSFM"], colors: ["White / Natural"], printAreas: ["front"] },
-
-  // ── Test ───────────────────────────────────────────────────────────────
-  {
-    id: "product-designer-test",
-    brand: "Rendall",
-    name: "Product Designer Test",
-    price: "$5.00",
-    priceCents: 500,
-    premium: "$4.00",
-    meta: ["6 sizes", "3 colors"],
-    emoji: "👕",
-    category: "clothing",
-    subcategory: "T-Shirts",
-    description: "Test product for designer development.",
-    sizes: ["S", "M", "L", "XL", "2XL", "3XL"],
-    colors: ["Black", "White", "Grey"],
-    printAreas: ["front", "back"],
-    photos: {
-      front: "/Product Designer Test Assets/Front.png",
-      back: "/Product Designer Test Assets/Back.png",
-    },
-    measurements: {
-      widthBySize: { S: 20.5, M: 22, L: 23.5, XL: 25, "2XL": 26.75, "3XL": 28.25 },
-      lengthBySize: { S: 26.25, M: 27.25, L: 28.25, XL: 29.25, "2XL": 30.25, "3XL": 31.25 },
-      printSpecs: {
-        front: { widthMm: 300, heightMm: 400, topOffsetMm: 80, overlay: { left: 0.31, top: 0.27, width: 0.38, height: 0.38 } },
-        back: { widthMm: 300, heightMm: 400, topOffsetMm: 60, overlay: { left: 0.30, top: 0.20, width: 0.40, height: 0.40 } },
-      },
-    },
-  },
 ];
 
 // Ordered subcategories for catalog display
