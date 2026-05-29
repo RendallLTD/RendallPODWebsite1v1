@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -45,6 +45,16 @@ function blankRecipient(cartItemId: string, defaultSize: string, defaultColor: s
 }
 
 export default function BulkStartPage() {
+  // useSearchParams() must be inside a Suspense boundary on Next.js 16
+  // for the static prerender to succeed.
+  return (
+    <Suspense fallback={<div style={{ padding: 80, textAlign: "center", color: "#666" }}>Loading…</div>}>
+      <BulkStartContent />
+    </Suspense>
+  );
+}
+
+function BulkStartContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
