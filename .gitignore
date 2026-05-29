@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Oversize dev-only assets — must never ship.
+# The function bundle hit Vercel's 250 MB limit on 2026-05-29 because of
+# these. WebP-converted product photos are the real fix; see plan.
+public/Product Designer Test Assets/
+public/preview-hero-mockup.png
