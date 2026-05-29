@@ -153,9 +153,38 @@ function BulkStartContent() {
   const [product, setProduct] = useState<Product | null>(
     returningProductId ? getProductById(returningProductId) ?? null : null,
   );
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  // Survives "← Edit design" round-trips through the designer (which unmounts
+  // this page). Written on every change, restored on mount. Designer-entry
+  // seeding effect treats sessionStorage-restored state the same as in-memory
+  // state — only refreshes design context fields, doesn't reset color/size/address.
+  const SESSION_KEY = "rendall_bulk_recipients_v1";
+  const [recipients, setRecipients] = useState<Recipient[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as Recipient[]) : [];
+    } catch {
+      return [];
+    }
+  });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Persist recipients to sessionStorage on every change.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (recipients.length === 0) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(recipients));
+    } catch {
+      // sessionStorage can throw under quota or in private mode — ignore.
+    }
+  }, [recipients]);
 
   // Designer-entry seeding: 3 blanks all bound to the just-created cart_item.
   // Reads the cart_item's actual size/color (set in the designer) AND the
@@ -338,6 +367,9 @@ function BulkStartContent() {
         setSubmitError(json?.error ?? "Failed to create order.");
         return;
       }
+      // Order created — cart_items have been consumed server-side. Drop the
+      // recipient draft so the next checkout starts clean.
+      if (typeof window !== "undefined") sessionStorage.removeItem(SESSION_KEY);
       router.push(`/checkout/payment/${json.order_id}`);
     } catch {
       setSubmitError("Network error. Please try again.");
