@@ -96,11 +96,11 @@ export default function CartPage() {
                 <span>${(totalCents / 100).toFixed(2)}</span>
               </div>
               <Link
-                href="/checkout/shipping"
+                href="/bulk-start?step=3&fromCart=1"
                 className="btn btn--primary btn--lg"
                 style={{ width: "100%", display: "inline-flex", justifyContent: "center" }}
               >
-                Continue to shipping
+                Continue to checkout
               </Link>
               <Link href="/catalog" className="btn btn--outline" style={{ width: "100%", marginTop: 12 }}>
                 Continue shopping

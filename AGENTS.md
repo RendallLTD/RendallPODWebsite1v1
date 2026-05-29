@@ -13,6 +13,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `@airwallex/components-sdk` is the opposite: client-only. It's dynamically imported inside `components/checkout/AirwallexDropIn.tsx`; don't import it server-side.
 - `lib/r2/*` is server-only — it holds the R2 secret key and mints presigned PUT URLs. Never import from a client component. Browsers upload via the **returned** presigned URL, not by importing this lib.
 
+## Checkout
+
+- **One checkout form.** `/bulk-start` is the only checkout page. Designer redirects there post-add-to-cart with `?step=3&designId=...&productId=...&cartItemId=...`; `/cart` checkout button redirects there with `?step=3&fromCart=1` (loads all user cart_items and seeds one recipient per row). The page is a thin client wrapper — all validation, rate-limit, and order creation happens server-side in `app/api/orders/create/route.ts`. **Do not add a second checkout form.** Removed `app/checkout/shipping/` on 2026-05-29.
+- **Per-recipient `reference`.** Optional string (max 64 chars) carried through `/api/orders/create` and stored on `order_items.recipient_address.reference`. Surfaces in admin and as factory XLSX column X. Sellers use it for Etsy order #s, Shopify SKUs, etc.
+
 ## Fulfillment hardening (post-Codex)
 
 - **Order item snapshot.** `order_items.design_snapshot` (jsonb), `image_url_snapshot`, `product_id_snapshot` are filled at insert time by a BEFORE INSERT trigger (migration 015). Renderer + factory XLSX/ZIP read from these, never from the live `designs` row. Don't add code that reads `designs.design_config` for paid-order fulfillment.

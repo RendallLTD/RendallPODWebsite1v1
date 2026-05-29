@@ -104,6 +104,9 @@ export default async function AdminOrderDetailPage({
                       <div>{item.recipient_address.line1}</div>
                       <div>{item.recipient_address.city}, {item.recipient_address.state} {item.recipient_address.postal}</div>
                       <div>{item.recipient_address.country} · {item.recipient_address.phone}</div>
+                      {item.recipient_address.reference && (
+                        <div style={{ marginTop: 4, opacity: 0.75 }}>Ref: {item.recipient_address.reference}</div>
+                      )}
                     </div>
                   )}
                   {job && (

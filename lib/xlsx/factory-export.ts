@@ -48,6 +48,7 @@ const HEADERS: string[] = [
   "文件包 / Files ZIP",      // U — Rendall-only: single-click zip of all sides' print + mockup + order.txt
   "效果图-背面 / Mockup Back", // V — Rendall-only: back mockup URL (blank if no back design)
   "打印图-背面 / Print Back",  // W — Rendall-only: back print file URL (blank if no back design)
+  "外部参考 / External Ref",   // X — Rendall-only: seller's optional per-row reference (Etsy order #, Shopify SKU, etc.)
 ];
 
 type ShippingAddress = {
@@ -58,6 +59,7 @@ type ShippingAddress = {
   country?: string;
   postal?: string;
   phone?: string;
+  reference?: string;
 };
 
 type OrderItem = {
@@ -126,7 +128,7 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
       }
       void (cfg as DesignConfigV2 | undefined);
 
-      const row: (string | number | null)[] = new Array(23).fill("");
+      const row: (string | number | null)[] = new Array(24).fill("");
       row[2] = compoundSku(productId, item.color, item.size); // C
       row[3] = item.quantity; // D
       row[4] = ship.name ?? ""; // E
@@ -143,6 +145,7 @@ export async function buildFactoryXlsx(orderIds: string[]): Promise<Buffer> {
       row[20] = signFactoryItemUrl(item.id, FACTORY_URL_TTL_SECONDS, siteUrl).url; // U
       row[21] = legacyUrlOrBlank(item.mockup_url_back); // V
       row[22] = legacyUrlOrBlank(item.print_url_back); // W
+      row[23] = (item.recipient_address as ShippingAddress | null)?.reference ?? ""; // X
 
       ws.addRow(row);
     }

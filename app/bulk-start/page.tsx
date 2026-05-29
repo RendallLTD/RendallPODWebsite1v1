@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   allProducts,
   subcategories,
@@ -12,6 +13,7 @@ import {
 import { STEP_COLORS } from "@/lib/bulk-steps";
 
 type Recipient = {
+  cart_item_id: string;
   name: string;
   line1: string;
   city: string;
@@ -25,8 +27,9 @@ type Recipient = {
   reference: string;
 };
 
-function blankRecipient(defaultSize: string, defaultColor: string): Recipient {
+function blankRecipient(cartItemId: string, defaultSize: string, defaultColor: string): Recipient {
   return {
+    cart_item_id: cartItemId,
     name: "",
     line1: "",
     city: "",
@@ -48,24 +51,71 @@ export default function BulkStartPage() {
   const initialStep = Number(searchParams.get("step")) || 1;
   const returningDesignId = searchParams.get("designId");
   const returningProductId = searchParams.get("productId");
+  const returningCartItemId = searchParams.get("cartItemId");
+  const fromCart = searchParams.get("fromCart") === "1";
 
-  const [step, setStep] = useState<number>(initialStep === 3 && returningDesignId ? 3 : 1);
+  const [step, setStep] = useState<number>(
+    initialStep === 3 && (returningCartItemId || fromCart) ? 3 : 1,
+  );
   const [product, setProduct] = useState<Product | null>(
     returningProductId ? getProductById(returningProductId) ?? null : null,
   );
   const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Designer-entry seeding: 3 blanks all bound to the just-created cart_item.
   useEffect(() => {
-    if (step === 3 && product && recipients.length === 0) {
-      const defaultSize = product.sizes[Math.min(2, product.sizes.length - 1)] ?? product.sizes[0];
-      const defaultColor = product.colors[0];
-      setRecipients([
-        blankRecipient(defaultSize, defaultColor),
-        blankRecipient(defaultSize, defaultColor),
-        blankRecipient(defaultSize, defaultColor),
-      ]);
-    }
-  }, [step, product, recipients.length]);
+    if (step !== 3 || fromCart) return;
+    if (!product || !returningCartItemId || recipients.length > 0) return;
+    const defaultSize = product.sizes[Math.min(2, product.sizes.length - 1)] ?? product.sizes[0];
+    const defaultColor = product.colors[0];
+    setRecipients([
+      blankRecipient(returningCartItemId, defaultSize, defaultColor),
+      blankRecipient(returningCartItemId, defaultSize, defaultColor),
+      blankRecipient(returningCartItemId, defaultSize, defaultColor),
+    ]);
+  }, [step, product, returningCartItemId, fromCart, recipients.length]);
+
+  // Cart-entry seeding: load all of the user's cart_items, seed one
+  // recipient per row carrying that row's id/size/color/qty. If the cart is
+  // empty, bounce back to /cart.
+  useEffect(() => {
+    if (step !== 3 || !fromCart || recipients.length > 0) return;
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login?next=/bulk-start?step=3%26fromCart=1");
+        return;
+      }
+      const { data: rows } = await supabase
+        .from("cart_items")
+        .select("id, quantity, size, color, design:designs(product_id)")
+        .eq("user_id", user.id);
+      const items = (rows as Array<{
+        id: string;
+        quantity: number;
+        size: string;
+        color: string;
+        design: { product_id: string } | { product_id: string }[] | null;
+      }>) ?? [];
+      if (items.length === 0) {
+        router.push("/cart");
+        return;
+      }
+      // Display product = the first item's product (most carts are single-design).
+      const firstDesign = Array.isArray(items[0].design) ? items[0].design[0] : items[0].design;
+      const firstProduct = firstDesign ? getProductById(firstDesign.product_id) : null;
+      if (firstProduct) setProduct(firstProduct);
+      setRecipients(
+        items.map((r) => ({
+          ...blankRecipient(r.id, r.size, r.color),
+          quantity: Math.max(1, r.quantity | 0),
+        })),
+      );
+    })();
+  }, [step, fromCart, recipients.length, router]);
 
   function selectProduct(p: Product) {
     router.push(`/design/${p.id}?bulkStart=1`);
@@ -76,10 +126,57 @@ export default function BulkStartPage() {
   }
 
   function addRow() {
-    if (!product) return;
+    if (!product || recipients.length === 0) return;
+    // Clone from the first row — matches the bulk-checkout assumption that
+    // additional ship-tos share the originating cart item (one design, many
+    // ship-tos). For multi-design carts, the seller can change cart selection
+    // via /cart before checkout.
+    const source = recipients[0];
     const defaultSize = product.sizes[Math.min(2, product.sizes.length - 1)] ?? product.sizes[0];
     const defaultColor = product.colors[0];
-    setRecipients((prev) => [...prev, blankRecipient(defaultSize, defaultColor)]);
+    setRecipients((prev) => [
+      ...prev,
+      blankRecipient(source.cart_item_id, source.size || defaultSize, source.color || defaultColor),
+    ]);
+  }
+
+  async function handleSubmit() {
+    if (submitting) return;
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const payload = {
+        recipients: recipients.map((r) => ({
+          cart_item_id: r.cart_item_id,
+          name: r.name.trim(),
+          line1: r.line1.trim(),
+          city: r.city.trim(),
+          state: r.state.trim(),
+          country: r.country,
+          postal: r.postal.trim(),
+          phone: r.phone.trim(),
+          size: r.size,
+          color: r.color,
+          quantity: r.quantity,
+          reference: r.reference.trim() || undefined,
+        })),
+      };
+      const res = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSubmitError(json?.error ?? "Failed to create order.");
+        return;
+      }
+      router.push(`/checkout/payment/${json.order_id}`);
+    } catch {
+      setSubmitError("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function removeRow(idx: number) {
@@ -200,7 +297,7 @@ export default function BulkStartPage() {
                         onChange={(e) => updateRecipient(idx, { name: e.target.value })} />
                     </TermField>
                     <TermField label="Phone" flex={1}>
-                      <input style={termInput} value={r.phone} placeholder="optional"
+                      <input style={termInput} value={r.phone} placeholder="+1 555 555 5555"
                         onChange={(e) => updateRecipient(idx, { phone: e.target.value })} />
                     </TermField>
                   </div>
@@ -281,26 +378,41 @@ export default function BulkStartPage() {
                 </div>
                 <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{fmt(subtotalCents)}</div>
               </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/design/${product.id}?bulkStart=1&designId=${returningDesignId}`)}
-                  className="btn"
-                >
-                  ← Edit design
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    alert(
-                      "Prototype — payment step wires into the existing order/payment flow next.",
-                    )
-                  }
-                  className="btn btn--primary"
-                  style={{ background: STEP_COLORS[2], borderColor: STEP_COLORS[2] }}
-                >
-                  Continue to payment →
-                </button>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                {submitError && (
+                  <div style={{ color: "#c0392b", fontSize: 13, maxWidth: 360, textAlign: "right" }}>
+                    {submitError}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 12 }}>
+                  {!fromCart && returningDesignId && (
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/design/${product.id}?bulkStart=1&designId=${returningDesignId}`)}
+                      className="btn"
+                    >
+                      ← Edit design
+                    </button>
+                  )}
+                  {fromCart && (
+                    <button
+                      type="button"
+                      onClick={() => router.push("/cart")}
+                      className="btn"
+                    >
+                      ← Back to cart
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={submitting || recipients.length === 0}
+                    className="btn btn--primary"
+                    style={{ background: STEP_COLORS[2], borderColor: STEP_COLORS[2] }}
+                  >
+                    {submitting ? "Submitting…" : "Continue to payment →"}
+                  </button>
+                </div>
               </div>
             </div>
           </section>

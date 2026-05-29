@@ -15,6 +15,7 @@ type RecipientAddress = {
   country: string;
   postal: string;
   phone: string;
+  reference?: string;
 };
 
 type RecipientInput = RecipientAddress & {
@@ -23,6 +24,8 @@ type RecipientInput = RecipientAddress & {
   color: string;
   quantity: number;
 };
+
+const MAX_REFERENCE_LEN = 64;
 
 const PHONE_RE = /^[+0-9()\- ]{5,25}$/;
 // Hard cap to prevent runaway batches. 500 still leaves plenty of headroom
@@ -55,6 +58,20 @@ function validateRecipient(input: unknown, idx: number): { ok: true; value: Reci
   if (!Number.isFinite(qtyNum) || qtyNum < 1 || qtyNum > 1000) {
     return { ok: false, reason: `${where}: quantity must be 1-1000` };
   }
+  // Optional per-row external reference (e.g. Etsy order #, Shopify SKU).
+  // Stored on order_items.recipient_address.reference and surfaced in the
+  // factory XLSX. Strict length cap to keep the XLSX cell readable.
+  let reference: string | undefined;
+  if (r.reference !== undefined && r.reference !== null && r.reference !== "") {
+    if (typeof r.reference !== "string") {
+      return { ok: false, reason: `${where}: reference must be a string` };
+    }
+    const trimmed = r.reference.trim();
+    if (trimmed.length > MAX_REFERENCE_LEN) {
+      return { ok: false, reason: `${where}: reference too long (max ${MAX_REFERENCE_LEN})` };
+    }
+    if (trimmed.length > 0) reference = trimmed;
+  }
   return {
     ok: true,
     value: {
@@ -69,6 +86,7 @@ function validateRecipient(input: unknown, idx: number): { ok: true; value: Reci
       size: (r.size as string).trim(),
       color: (r.color as string).trim(),
       quantity: Math.floor(qtyNum),
+      ...(reference !== undefined ? { reference } : {}),
     },
   };
 }
@@ -163,6 +181,7 @@ export async function POST(request: NextRequest) {
         country: r.country,
         postal: r.postal,
         phone: r.phone,
+        ...(r.reference !== undefined ? { reference: r.reference } : {}),
       },
     });
   }
@@ -197,6 +216,29 @@ export async function POST(request: NextRequest) {
     // Roll back the order so we don't accumulate orphans.
     await admin.from("orders").delete().eq("id", order.id);
     return Response.json({ error: itemsErr.message }, { status: 500 });
+  }
+
+  // Clear the cart of items that were actually purchased. Only delete
+  // cart_items referenced by at least one recipient — anything the user
+  // had in cart but didn't include a recipient for stays in the cart.
+  // Best-effort: the order is already created, so a delete failure here
+  // doesn't void the purchase. Log and move on.
+  const purchasedCartItemIds = Array.from(
+    new Set(recipients.map((r) => r.cart_item_id)),
+  );
+  if (purchasedCartItemIds.length > 0) {
+    const { error: cleanupErr } = await admin
+      .from("cart_items")
+      .delete()
+      .in("id", purchasedCartItemIds)
+      .eq("user_id", user.id);
+    if (cleanupErr) {
+      console.error("[orders/create] cart cleanup failed", {
+        order_id: order.id,
+        ids: purchasedCartItemIds,
+        err: cleanupErr.message,
+      });
+    }
   }
 
   return Response.json({ order_id: order.id });

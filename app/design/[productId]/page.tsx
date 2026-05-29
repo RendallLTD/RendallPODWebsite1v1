@@ -537,15 +537,19 @@ export default function DesignPage({
         designId = design.id;
       }
 
-      const { error: cartErr } = await supabase.from("cart_items").insert({
-        user_id: user.id,
-        design_id: designId,
-        quantity: 1,
-        size: selectedSize,
-        color: selectedColor,
-      });
+      const { data: cartRow, error: cartErr } = await supabase
+        .from("cart_items")
+        .insert({
+          user_id: user.id,
+          design_id: designId,
+          quantity: 1,
+          size: selectedSize,
+          color: selectedColor,
+        })
+        .select("id")
+        .single();
 
-      if (cartErr) {
+      if (cartErr || !cartRow) {
         // For new designs only, roll back the orphan so retries don't
         // accumulate garbage. In edit mode the design legitimately exists
         // and updates have already been applied — leave it alone.
@@ -556,7 +560,7 @@ export default function DesignPage({
         return;
       }
 
-      router.push(`/bulk-start?step=3&designId=${designId}&productId=${product.id}`);
+      router.push(`/bulk-start?step=3&designId=${designId}&productId=${product.id}&cartItemId=${cartRow.id}`);
     } finally {
       setSaving(false);
       addToCartInFlight.current = false;
@@ -576,13 +580,10 @@ export default function DesignPage({
   let designDimensions: { widthCm: number; heightCm: number } | null = null;
   if (currentPrintSpec && activeLayer && designRenderedSize && printAreaRef.current) {
     const pa = printAreaRef.current;
-    const paW = pa.clientWidth;
-    const paH = pa.clientHeight;
-    const pxPerMmW = paW / currentPrintSpec.widthMm;
-    const pxPerMmH = paH / currentPrintSpec.heightMm;
+    const pxPerMm = pa.clientWidth / currentPrintSpec.widthMm;
     designDimensions = {
-      widthCm: designRenderedSize.w / pxPerMmW / 10,
-      heightCm: designRenderedSize.h / pxPerMmH / 10,
+      widthCm: designRenderedSize.w / pxPerMm / 10,
+      heightCm: designRenderedSize.h / pxPerMm / 10,
     };
   }
 
@@ -619,7 +620,7 @@ export default function DesignPage({
         )}
         <div className="design-page__layout">
           <div className="design-page__left">
-            <div className="design-page__canvases">
+            <div className={`design-page__canvases ${previewMode ? "design-page__canvases--preview" : ""}`}>
               {product.printAreas.map((side) => {
                 const isActive = side === activeSide;
                 const sideState = sides[side] ?? emptySide();
