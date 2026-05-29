@@ -113,7 +113,7 @@ export default function PaymentPage({
         {paying && <p>Confirming your payment…</p>}
 
         <div style={{ marginTop: 32 }}>
-          <Link href="/cart" className="btn btn--outline">Back to cart</Link>
+          <Link href="/bulk-start?step=3&fromCart=1" className="btn btn--outline">Back to checkout</Link>
         </div>
       </div>
     </section>

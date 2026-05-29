@@ -47,7 +47,7 @@ export default function Header() {
                 <Link href="/admin" className="btn btn--outline btn--sm">Admin</Link>
               )}
               <Link href="/dashboard" className="btn btn--outline btn--sm">Dashboard</Link>
-              <Link href="/cart" className="header__cart" aria-label="Cart">
+              <Link href="/bulk-start?step=3&fromCart=1" className="header__cart" aria-label="Cart">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
                   <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />

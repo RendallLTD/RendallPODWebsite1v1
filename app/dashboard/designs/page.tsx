@@ -101,7 +101,7 @@ export default function DesignsPage() {
         return;
       }
 
-      router.push("/cart");
+      router.push("/bulk-start?step=3&fromCart=1");
     } finally {
       setReorderingId(null);
     }

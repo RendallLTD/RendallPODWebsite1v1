@@ -40,7 +40,7 @@ function buildDesignPayload(
   selectedColor: string,
   printAreaPx: { w: number; h: number } | null,
   naturalByLayer: Record<string, LayerNaturalSize>
-): { designConfig: DesignConfigV2; primaryImage: string } | null {
+): { designConfig: DesignConfigV2; primaryImage: string; frontImage: string | null; backImage: string | null } | null {
   if (!printAreaPx || printAreaPx.w === 0 || printAreaPx.h === 0) return null;
 
   const sidesConfig: Record<string, MmLayer[]> = {};
@@ -71,8 +71,11 @@ function buildDesignPayload(
     if (mmLayers.length > 0) sidesConfig[side] = mmLayers;
   }
 
+  const frontImage = sidesConfig.front?.[0]?.image ?? null;
+  const backImage = sidesConfig.back?.[0]?.image ?? null;
   const primaryImage =
-    sidesConfig.front?.[0]?.image ??
+    frontImage ??
+    backImage ??
     Object.values(sidesConfig)[0]?.[0]?.image ??
     "";
 
@@ -83,7 +86,7 @@ function buildDesignPayload(
     sides: sidesConfig,
   };
 
-  return { designConfig, primaryImage };
+  return { designConfig, primaryImage, frontImage, backImage };
 }
 
 export default function DesignPage({
@@ -446,6 +449,8 @@ export default function DesignPage({
         .update({
           name: `${product.name} Design`,
           image_url: payload.primaryImage,
+          image_url_front: payload.frontImage,
+          image_url_back: payload.backImage,
           design_config: payload.designConfig,
         })
         .eq("id", editingDesignId);
@@ -463,6 +468,8 @@ export default function DesignPage({
       product_id: product.id,
       name: `${product.name} Design`,
       image_url: payload.primaryImage,
+      image_url_front: payload.frontImage,
+      image_url_back: payload.backImage,
       design_config: payload.designConfig,
     });
     setSaving(false);
@@ -509,6 +516,8 @@ export default function DesignPage({
           .update({
             name: `${product.name} Design`,
             image_url: payload.primaryImage,
+            image_url_front: payload.frontImage,
+            image_url_back: payload.backImage,
             design_config: payload.designConfig,
           })
           .eq("id", editingDesignId);
@@ -525,6 +534,8 @@ export default function DesignPage({
             product_id: product.id,
             name: `${product.name} Design`,
             image_url: payload.primaryImage,
+            image_url_front: payload.frontImage,
+            image_url_back: payload.backImage,
             design_config: payload.designConfig,
           })
           .select("id")
