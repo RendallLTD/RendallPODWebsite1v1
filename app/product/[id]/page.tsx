@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProductById, getProductHero, allProducts } from "@/lib/products";
+import { getProductById, allProducts } from "@/lib/products";
 import SplatButton from "@/components/SplatButton";
+import ProductColorPicker from "./ProductColorPicker";
 
 export function generateStaticParams() {
   return allProducts.map((p) => ({ id: p.id }));
@@ -17,7 +17,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <section className="product-detail">
         <div className="container product-detail__layout">
           <div className="product-detail__image">
-            <div className="product-detail__img-box"><img src={getProductHero(product)} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+            <ProductColorPicker product={product} />
           </div>
           <div className="product-detail__info">
             <div className="product-detail__brand">{product.brand}</div>
@@ -29,22 +29,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
             <div className="product-detail__option">
               <h3>Available Sizes</h3>
-              <div className="product-detail__tags">
-                {product.sizes.map((s) => <span key={s} className="tag">{s}</span>)}
-              </div>
-            </div>
-
-            <div className="product-detail__option">
-              <h3>Colors</h3>
-              <div className="product-detail__tags">
-                {product.colors.map((c) => <span key={c} className="tag">{c}</span>)}
+              <div className="product-detail__grid">
+                {product.sizes.map((s) => <span key={s} className="product-detail__cell">{s}</span>)}
               </div>
             </div>
 
             <div className="product-detail__option">
               <h3>Print Areas</h3>
-              <div className="product-detail__tags">
-                {product.printAreas.map((a) => <span key={a} className="tag">{a}</span>)}
+              <div className="product-detail__grid">
+                {product.printAreas.map((a) => <span key={a} className="product-detail__cell">{a}</span>)}
               </div>
             </div>
 
