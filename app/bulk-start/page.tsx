@@ -189,8 +189,6 @@ function BulkStartContent() {
       const color = r?.color ?? product.colors[0];
       const designContext = {
         cart_item_id: returningCartItemId,
-        size,
-        color,
         design_image_url: design?.image_url ?? undefined,
         design_image_url_front: design?.image_url_front ?? undefined,
         design_image_url_back: design?.image_url_back ?? undefined,
@@ -200,6 +198,7 @@ function BulkStartContent() {
       };
       setRecipients((prev) => {
         if (prev.length === 0) {
+          // First entry: use the designer's chosen size/color as defaults.
           const extras = {
             designImageUrl: designContext.design_image_url,
             designImageUrlFront: designContext.design_image_url_front,
@@ -214,8 +213,9 @@ function BulkStartContent() {
             blankRecipient(returningCartItemId, size, color, extras),
           ];
         }
-        // Edit-design re-entry: preserve typed address/phone/ref, rebind
-        // the design-context fields.
+        // Edit-design re-entry: rebind design context (thumbnail, layer,
+        // cart_item binding) but preserve each row's size/color the user
+        // may have customized per-recipient, plus typed address/phone/ref.
         return prev.map((row) => ({ ...row, ...designContext }));
       });
     })();
