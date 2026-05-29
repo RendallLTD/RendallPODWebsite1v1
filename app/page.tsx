@@ -35,9 +35,9 @@ export default function Home() {
   return (
     <>
       {/* HERO — dotted title with model cutouts overlapping into it */}
-      <section style={{ background: "#fff", padding: "32px 0 16px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <h1 className="font-dot" style={{ fontSize: "clamp(36px, 14vw, 240px)", fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.02em", margin: 0, color: "var(--dark)", textTransform: "none", whiteSpace: "nowrap", position: "relative", zIndex: 1 }}>
-          IDEA -&gt; INCOME
+      <section style={{ background: "#fff", padding: "80px 0 16px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <h1 className="font-dot" style={{ fontSize: "12vw", fontWeight: 400, lineHeight: 0.95, letterSpacing: 0, margin: 0, color: "var(--dark)", textTransform: "none", whiteSpace: "nowrap", position: "relative", zIndex: 1 }}>
+          IDEA <img src="/arrow-dot.svg" alt="to" style={{ height: "0.5em", verticalAlign: "middle", display: "inline-block" }} /> INCOME
         </h1>
       </section>
 
@@ -58,34 +58,44 @@ export default function Home() {
           {/* Center CTA */}
           <div style={{ textAlign: "center", alignSelf: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, pointerEvents: "auto", position: "relative", zIndex: 3 }}>
             <div className="hero__checks" style={{ flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 0 }}>
-              {["100% Free to use", "48H Dispatch Within US"].map((text) => (
+              {["NO SUBSCRIPTIONS!", "48H Dispatch Within US"].map((text) => (
                 <div key={text} className="hero__check">
                   <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
                   {text}
                 </div>
               ))}
             </div>
-            <Link
-              href="/catalog"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "16px 32px",
-                background: "#1a1a1a",
-                color: "#fff",
-                fontFamily: '"PP Neue Machina", "Hack", monospace',
-                fontSize: 20,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-              }}
-            >
-              [ View catalog →&nbsp;]
-            </Link>
-            <p className="hero__sub" style={{ margin: 0 }}>No credit card required</p>
-            {/* sub has its own margin-bottom from .hero__sub class — already overridden to 0 by inline */}
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <Link
+                href="/catalog"
+                className="glass-cta"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "28px 63px",
+                  background: "rgba(255,255,255,0.55)",
+                  color: "#1a1a1a",
+                  fontFamily: '"PP Neue Machina", "Hack", monospace',
+                  fontSize: 31,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  border: "1px solid rgba(255,255,255,0.9)",
+                  borderRadius: 999,
+                  backdropFilter: "blur(16px) saturate(180%)",
+                  WebkitBackdropFilter: "blur(16px) saturate(180%)",
+                  boxShadow: "inset 0 1px 1px rgba(255,255,255,1), inset 0 -10px 18px rgba(255,255,255,0.5), inset 1px 0 0 rgba(255,255,255,0.6), inset -1px 0 0 rgba(255,255,255,0.6), 0 10px 14px -6px rgba(255,255,255,0.95), 0 22px 28px -8px rgba(0,0,0,0.10), 0 40px 50px -16px rgba(0,0,0,0.12)",
+                }}
+              >
+                [ View catalog →&nbsp;]
+              </Link>
+              <img src="/logo.svg" alt="" className="cta-frog" style={{ position: "absolute", top: -30, left: -45, height: 80, width: "auto", pointerEvents: "none", zIndex: 3, filter: "none" }} />
+            </div>
+            <div style={{ marginTop: 12, fontFamily: '"Hack", "SF Mono", "Monaco", "Menlo", "Consolas", monospace', fontSize: 14, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-secondary)" }}>
+              Rendall Pod
+            </div>
           </div>
 
           {/* Right model slot — rotating set B (other guys), staggered start so no collision */}

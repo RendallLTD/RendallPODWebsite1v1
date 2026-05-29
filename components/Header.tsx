@@ -32,7 +32,7 @@ export default function Header() {
   return (
     <header className="header">
       <div className="container header__inner">
-        <Link href="/" className="logo"><img src="/logo.svg" alt="" className="logo__icon" /><span className="logo__text">rend<span>all</span></span></Link>
+        <Link href="/" className="logo" aria-label="Rendall"><img src="/logo.svg" alt="Rendall" className="logo__icon" /></Link>
         <nav className="nav">
           <Link href="/catalog">Catalog</Link>
           <a href="/#how-it-works">How It Works</a>
@@ -56,10 +56,7 @@ export default function Header() {
               </Link>
             </>
           ) : (
-            <>
-              <Link href="/login" className="btn btn--outline btn--sm">Log in</Link>
-              <Link href="/signup" className="btn btn--primary btn--sm">Get started for free</Link>
-            </>
+            <Link href="/login" className="btn btn--outline btn--sm">Account</Link>
           )}
         </div>
         <button

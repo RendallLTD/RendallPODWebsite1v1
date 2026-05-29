@@ -252,10 +252,9 @@ export default function DesignCanvas({
           renderH = paH;
           renderW = paH * aspect;
         }
-        const pxPerMmW = paW / printSpec.widthMm;
-        const pxPerMmH = paH / printSpec.heightMm;
-        const designWidthMm = (renderW * activeLayer.scale) / pxPerMmW;
-        const designHeightMm = (renderH * activeLayer.scale) / pxPerMmH;
+        const pxPerMm = paW / printSpec.widthMm;
+        const designWidthMm = (renderW * activeLayer.scale) / pxPerMm;
+        const designHeightMm = (renderH * activeLayer.scale) / pxPerMm;
         dimensionLabel = `${(designWidthMm / 10).toFixed(1)} × ${(designHeightMm / 10).toFixed(1)} cm`;
       }
     }
@@ -281,7 +280,9 @@ export default function DesignCanvas({
           left: `${overlay.left * 100}%`,
           top: `${overlay.top * 100}%`,
           width: `${overlay.width * 100}%`,
-          height: `${overlay.height * 100}%`,
+          ...(printSpec
+            ? { aspectRatio: `${printSpec.widthMm} / ${printSpec.heightMm}` }
+            : { height: `${overlay.height * 100}%` }),
         }}
       >
         {layers.map((layer) => (
